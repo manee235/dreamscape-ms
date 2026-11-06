@@ -41,6 +41,22 @@ CREATE TABLE IF NOT EXISTS payments (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Admin users table
+CREATE TABLE IF NOT EXISTS admin_users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  username VARCHAR(100) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  full_name VARCHAR(255),
+  role VARCHAR(50) DEFAULT 'admin',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Default admin login
+INSERT INTO admin_users (username, password, full_name, role)
+VALUES ('isanka', 'tharindu', 'Isanka (Admin)', 'admin')
+ON CONFLICT (username) DO UPDATE 
+SET password = EXCLUDED.password;
+
 -- View: project payment summary
 CREATE OR REPLACE VIEW project_payment_summary AS
 SELECT 
@@ -64,50 +80,14 @@ LEFT JOIN payments pm ON pm.project_id = p.id
 GROUP BY p.id, p.project_name, p.project_type, p.status, p.total_amount,
          p.client_id, c.name, c.email, c.phone, p.start_date, p.end_date, p.created_at;
 
--- RLS: Disable for now (admin-only app)
+-- RLS & Permissions
 ALTER TABLE clients DISABLE ROW LEVEL SECURITY;
 ALTER TABLE projects DISABLE ROW LEVEL SECURITY;
 ALTER TABLE payments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_users DISABLE ROW LEVEL SECURITY;
 
--- Sample data
-INSERT INTO clients (name, email, phone, address) VALUES
-  ('Nimal Perera', 'nimal@gmail.com', '0771234567', 'No 12, Galle Road, Colombo 03'),
-  ('Sunil Fernando', 'sunil@gmail.com', '0712345678', 'No 45, Kandy Road, Kurunegala'),
-  ('Kamala Silva', 'kamala@gmail.com', '0761234567', 'No 7, Temple Road, Kandy');
-
-INSERT INTO projects (client_id, project_name, project_type, description, status, total_amount, start_date, end_date)
-SELECT 
-  c.id, 'Modern 2-Story Residence', 'House Design & Planning', 
-  'Complete architectural design and planning for a modern 2-story house with 4 bedrooms.', 
-  'Active', 850000.00, '2026-01-15', '2026-06-30'
-FROM clients c WHERE c.name = 'Nimal Perera';
-
-INSERT INTO projects (client_id, project_name, project_type, description, status, total_amount, start_date, end_date)
-SELECT 
-  c.id, 'Traditional Villa Design', 'House Design & Planning',
-  'Traditional Sri Lankan style villa with modern amenities.',
-  'Active', 1200000.00, '2026-02-01', '2026-09-30'
-FROM clients c WHERE c.name = 'Sunil Fernando';
-
-INSERT INTO projects (client_id, project_name, project_type, description, status, total_amount, start_date, end_date)
-SELECT 
-  c.id, 'Luxury Bungalow Plan', 'Interior Design',
-  'Luxury bungalow with pool and landscaping design.',
-  'On Hold', 650000.00, '2026-03-01', '2026-12-31'
-FROM clients c WHERE c.name = 'Kamala Silva';
-
-INSERT INTO payments (project_id, client_id, amount, payment_date, payment_method, reference_number, notes)
-SELECT 
-  p.id, p.client_id, 250000.00, '2026-02-10', 'Bank Transfer', 'TXN-2026-001', 'Initial deposit'
-FROM projects p WHERE p.project_name = 'Modern 2-Story Residence';
-
-INSERT INTO payments (project_id, client_id, amount, payment_date, payment_method, reference_number, notes)
-SELECT 
-  p.id, p.client_id, 150000.00, '2026-04-05', 'Cash', NULL, 'Second installment'
-FROM projects p WHERE p.project_name = 'Modern 2-Story Residence';
-
-INSERT INTO payments (project_id, client_id, amount, payment_date, payment_method, reference_number, notes)
-SELECT 
-  p.id, p.client_id, 400000.00, '2026-02-20', 'Cheque', 'CHQ-0045', 'First payment'
-FROM projects p WHERE p.project_name = 'Traditional Villa Design';
-
+GRANT ALL ON TABLE clients TO anon, authenticated, service_role;
+GRANT ALL ON TABLE projects TO anon, authenticated, service_role;
+GRANT ALL ON TABLE payments TO anon, authenticated, service_role;
+GRANT ALL ON TABLE admin_users TO anon, authenticated, service_role;
+GRANT ALL ON project_payment_summary TO anon, authenticated, service_role;

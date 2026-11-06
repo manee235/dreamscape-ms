@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { Home } from 'lucide-react'
+import { supabase } from '../supabase'
 
-const ADMIN_CREDENTIALS = {
+const DEFAULT_CREDENTIALS = {
   username: 'isanka',
   password: 'tharindu',
 }
@@ -10,17 +11,54 @@ export default function Login({ onLogin }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    if (
-      username === ADMIN_CREDENTIALS.username &&
-      password === ADMIN_CREDENTIALS.password
-    ) {
-      onLogin({ username })
-    } else {
-      setError('Invalid username or password. Please try again.')
+    setLoading(true)
+
+    try {
+      // 1. Try checking against Supabase admin_users table
+      const { data, error: dbError } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('username', username.trim().toLowerCase())
+        .maybeSingle()
+
+      if (!dbError && data) {
+        if (data.password === password) {
+          onLogin({ username: data.username, fullName: data.full_name || data.username })
+          setLoading(false)
+          return
+        } else {
+          setError('Invalid password. Please try again.')
+          setLoading(false)
+          return
+        }
+      }
+
+      // 2. Fallback to hardcoded admin credentials
+      if (
+        username.trim().toLowerCase() === DEFAULT_CREDENTIALS.username &&
+        password === DEFAULT_CREDENTIALS.password
+      ) {
+        onLogin({ username: DEFAULT_CREDENTIALS.username, fullName: 'Isanka (Admin)' })
+      } else {
+        setError('Invalid username or password. Please try again.')
+      }
+    } catch (err) {
+      // Offline / network fallback
+      if (
+        username.trim().toLowerCase() === DEFAULT_CREDENTIALS.username &&
+        password === DEFAULT_CREDENTIALS.password
+      ) {
+        onLogin({ username: DEFAULT_CREDENTIALS.username, fullName: 'Isanka (Admin)' })
+      } else {
+        setError('Invalid username or password. Please try again.')
+      }
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -42,7 +80,7 @@ export default function Login({ onLogin }) {
             <label>Username</label>
             <input
               type="text"
-              placeholder="Enter username"
+              placeholder="Enter username (isanka)"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoFocus
@@ -53,14 +91,14 @@ export default function Login({ onLogin }) {
             <label>Password</label>
             <input
               type="password"
-              placeholder="Enter password"
+              placeholder="Enter password (tharindu)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
-          <button type="submit" className="login-btn">
-            Sign In to Dashboard
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign In to Dashboard'}
           </button>
         </form>
 
@@ -71,4 +109,3 @@ export default function Login({ onLogin }) {
     </div>
   )
 }
-
