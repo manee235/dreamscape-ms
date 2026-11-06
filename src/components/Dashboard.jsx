@@ -17,6 +17,7 @@ import {
   Phone,
   Search,
   ChevronRight,
+  CreditCard,
 } from 'lucide-react'
 
 function fmt(n) {
@@ -100,7 +101,9 @@ function buildChartData(paymentsList = [], projectsList = []) {
     }
 
     const path = buildPath(curvePoints)
-    const fillPath = `${path} L ${curvePoints[curvePoints.length - 1].x} ${baselineY + 30} L ${curvePoints[0].x} ${baselineY + 30} Z`
+    const lastPt = curvePoints.length > 0 ? curvePoints[curvePoints.length - 1] : { x: usableW + paddingX, y: baselineY }
+    const firstPt = curvePoints.length > 0 ? curvePoints[0] : { x: paddingX, y: baselineY }
+    const fillPath = path ? `${path} L ${lastPt.x} ${baselineY + 30} L ${firstPt.x} ${baselineY + 30} Z` : ''
     const forecastPath = buildPath(forecastPoints)
 
     return { curvePoints, forecastPoints, path, fillPath, forecastPath }
@@ -239,12 +242,13 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
     setActivePointIndex(index)
   }
 
-  const currentDataset = chartData[timeframe] || chartData.Week
-  const safeIndex = Math.min(activePointIndex, currentDataset.labels.length - 1)
-  const currentPoint = currentDataset.curvePoints[safeIndex] || { x: 370, y: 190 }
-  const currentLabel = currentDataset.labels[safeIndex] || 'Mon'
-  const currentCollected = currentDataset.collected[safeIndex] || 0
-  const currentProjected = currentDataset.projected[safeIndex] || 0
+  const currentDataset = chartData[timeframe] || chartData.Week || { labels: [], collected: [], projected: [], curvePoints: [], forecastPoints: [] }
+  const labelCount = currentDataset?.labels?.length || 1
+  const safeIndex = Math.max(0, Math.min(activePointIndex || 0, labelCount - 1))
+  const currentPoint = currentDataset?.curvePoints?.[safeIndex] || { x: 370, y: 190 }
+  const currentLabel = currentDataset?.labels?.[safeIndex] || 'Mon'
+  const currentCollected = currentDataset?.collected?.[safeIndex] || 0
+  const currentProjected = currentDataset?.projected?.[safeIndex] || 0
 
   // Calculate dynamic tooltip X to stay within screen boundaries
   const tooltipLeftPercent = Math.max(25, Math.min(75, (currentPoint.x / 700) * 100))
@@ -579,7 +583,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
                   </div>
                 </div>
                 <div className="condition-cell-val">
-                  {stats?.completedCount} <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Plans</span>
+                  {stats?.completedCount || 0} <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Plans</span>
                 </div>
               </div>
 
@@ -591,7 +595,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
                   </div>
                 </div>
                 <div className="condition-cell-val">
-                  {stats?.clientsCount} <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>By Mobile</span>
+                  {stats?.clientsCount || 0} <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>By Mobile</span>
                 </div>
               </div>
 

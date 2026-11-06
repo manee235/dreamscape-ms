@@ -8,6 +8,7 @@ import Projects from './components/Projects'
 import Payments from './components/Payments'
 import InstallPrompt from './components/InstallPrompt'
 import CustomerLookupModal from './components/CustomerLookupModal'
+import ErrorBoundary from './components/ErrorBoundary'
 import {
   Menu,
   Search,
@@ -232,7 +233,11 @@ function App() {
           </div>
         </header>
 
-        <div className="page-content">{renderPage()}</div>
+        <div className="page-content">
+          <ErrorBoundary>
+            {renderPage()}
+          </ErrorBoundary>
+        </div>
 
         {/* Mobile Native Bottom Navigation Bar */}
         <nav className="mobile-bottom-bar">

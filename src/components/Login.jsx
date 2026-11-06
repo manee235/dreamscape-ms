@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Home } from 'lucide-react'
+import { Home, Lock, User, Eye, EyeOff, ArrowRight, ShieldCheck, AlertCircle, KeyRound } from 'lucide-react'
 import { supabase } from '../supabase'
 
 const DEFAULT_CREDENTIALS = {
@@ -10,6 +10,7 @@ const DEFAULT_CREDENTIALS = {
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -32,13 +33,13 @@ export default function Login({ onLogin }) {
           setLoading(false)
           return
         } else {
-          setError('Invalid password. Please try again.')
+          setError('Invalid password. Please check and try again.')
           setLoading(false)
           return
         }
       }
 
-      // 2. Fallback to hardcoded admin credentials
+      // 2. Fallback to default admin credentials
       if (
         username.trim().toLowerCase() === DEFAULT_CREDENTIALS.username &&
         password === DEFAULT_CREDENTIALS.password
@@ -62,49 +63,111 @@ export default function Login({ onLogin }) {
     }
   }
 
+  const fillQuickDemo = () => {
+    setUsername(DEFAULT_CREDENTIALS.username)
+    setPassword(DEFAULT_CREDENTIALS.password)
+    setError('')
+  }
+
   return (
     <div className="login-page">
       <div className="login-card">
+        {/* Brand Header */}
         <div className="login-logo">
-          <div className="logo-icon">
-            <Home size={36} />
+          <div className="login-logo-badge">
+            <Home size={26} strokeWidth={2.2} />
           </div>
           <h1>Dreamscape MS</h1>
-          <p>House Design &amp; Planning Agency</p>
+          <p>House Design &amp; Planning Agency Management</p>
         </div>
 
-        {error && <div className="login-error">{error}</div>}
+        {/* Error notification */}
+        {error && (
+          <div className="login-error">
+            <AlertCircle size={15} style={{ flexShrink: 0 }} />
+            <span>{error}</span>
+          </div>
+        )}
 
+        {/* Login Form */}
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Username</label>
-            <input
-              type="text"
-              placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoFocus
-              required
-            />
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Admin Username
+            </label>
+            <div className="login-input-wrapper">
+              <span className="login-input-icon">
+                <User size={16} />
+              </span>
+              <input
+                type="text"
+                className="login-input-field"
+                placeholder="Enter username (e.g. isanka)"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoFocus
+                required
+              />
+            </div>
           </div>
+
           <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Password
+            </label>
+            <div className="login-input-wrapper">
+              <span className="login-input-icon">
+                <Lock size={16} />
+              </span>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="login-input-field"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
           </div>
+
           <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In to Dashboard'}
+            {loading ? (
+              <span>Authenticating...</span>
+            ) : (
+              <>
+                <span>Sign In to Dashboard</span>
+                <ArrowRight size={16} />
+              </>
+            )}
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: 24, fontSize: 12, color: '#94a3b8' }}>
-          Admin access only &mdash; Dreamscape Management System
-        </p>
+        {/* Quick Demo Credentials Autofill Pill */}
+        <div
+          className="login-quick-pill"
+          onClick={fillQuickDemo}
+          title="Click to automatically fill default credentials"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <KeyRound size={13} color="var(--primary)" />
+            <span>Default Login: <strong>isanka</strong> / <strong>tharindu</strong></span>
+          </div>
+          <span style={{ fontSize: 10, color: 'var(--primary)', fontWeight: 600 }}>1-Click Fill ↗</span>
+        </div>
+
+        {/* Footer */}
+        <div className="login-footer">
+          <ShieldCheck size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: -1, color: 'var(--primary)' }} />
+          Admin secure authentication &bull; Dreamscape MS v2.0
+        </div>
       </div>
     </div>
   )
