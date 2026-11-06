@@ -7,6 +7,7 @@ import Clients from './components/Clients'
 import Projects from './components/Projects'
 import Payments from './components/Payments'
 import InstallPrompt from './components/InstallPrompt'
+import CustomerLookupModal from './components/CustomerLookupModal'
 import {
   Menu,
   Search,
@@ -19,7 +20,7 @@ import {
   FolderOpen,
   Users,
   CreditCard,
-  X,
+  Phone,
 } from 'lucide-react'
 
 const PAGE_TITLES = {
@@ -44,6 +45,9 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+
+  // Customer Mobile Lookup Modal
+  const [customerLookupOpen, setCustomerLookupOpen] = useState(false)
 
   // Light / Dark Mode State
   const [theme, setTheme] = useState(() => {
@@ -88,7 +92,13 @@ function App() {
   const renderPage = () => {
     switch (page) {
       case 'dashboard':
-        return <Dashboard key={refreshKey} onNavigate={navigateTo} />
+        return (
+          <Dashboard
+            key={refreshKey}
+            onNavigate={navigateTo}
+            onOpenCustomerLookup={() => setCustomerLookupOpen(true)}
+          />
+        )
       case 'clients':
         return <Clients key={refreshKey} />
       case 'projects':
@@ -96,12 +106,22 @@ function App() {
       case 'payments':
         return <Payments key={refreshKey} />
       default:
-        return <Dashboard key={refreshKey} onNavigate={navigateTo} />
+        return (
+          <Dashboard
+            key={refreshKey}
+            onNavigate={navigateTo}
+            onOpenCustomerLookup={() => setCustomerLookupOpen(true)}
+          />
+        )
     }
   }
 
   return (
     <div className="app-layout">
+      {/* Subtle Ambient Glows */}
+      <div className="ambient-glow-1" />
+      <div className="ambient-glow-2" />
+
       {/* Mobile Drawer Backdrop */}
       <div
         className={`mobile-drawer-backdrop ${mobileMenuOpen ? 'open' : ''}`}
@@ -121,6 +141,13 @@ function App() {
       <main className="main-content">
         {/* PWA Install Notification Prompt */}
         <InstallPrompt />
+
+        {/* Customer Mobile Number Lookup Modal */}
+        <CustomerLookupModal
+          isOpen={customerLookupOpen}
+          onClose={() => setCustomerLookupOpen(false)}
+          onMarkPayment={() => navigateTo('payments')}
+        />
 
         {/* Enhanced Top Bar */}
         <header className="top-bar">
@@ -142,18 +169,34 @@ function App() {
           </div>
 
           <div className="top-bar-center">
-            <div className="top-search-box">
-              <Search size={16} />
+            <div
+              className="top-search-box"
+              style={{ cursor: 'pointer' }}
+              onClick={() => setCustomerLookupOpen(true)}
+            >
+              <Phone size={15} color="var(--primary)" />
               <input
                 type="text"
-                placeholder="Search projects, clients..."
-                value={globalSearch}
-                onChange={(e) => setGlobalSearch(e.target.value)}
+                placeholder="Search customer by mobile number..."
+                readOnly
+                style={{ cursor: 'pointer' }}
               />
+              <kbd style={{ fontSize: 10, background: 'var(--border-color)', padding: '2px 6px', borderRadius: 4, color: 'var(--text-muted)' }}>
+                Mobile #
+              </kbd>
             </div>
           </div>
 
           <div className="top-bar-right">
+            {/* Mobile Search Button (visible on mobile only) */}
+            <button
+              className="top-action-btn"
+              title="Search Customer Mobile Number"
+              onClick={() => setCustomerLookupOpen(true)}
+            >
+              <Phone size={16} color="var(--primary)" />
+            </button>
+
             {/* Fast Manual Refresh */}
             <button
               className="top-action-btn"
@@ -172,7 +215,7 @@ function App() {
               title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
               onClick={toggleTheme}
             >
-              {theme === 'dark' ? <Sun size={17} color="#ffb547" /> : <Moon size={17} />}
+              {theme === 'dark' ? <Sun size={17} color="#f59e0b" /> : <Moon size={17} />}
             </button>
 
             {/* Quick Action: Mark Payment */}
