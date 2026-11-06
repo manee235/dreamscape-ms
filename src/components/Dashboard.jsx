@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import {
-  CreditCard,
   TrendingUp,
-  AlertCircle,
-  Users,
   FolderOpen,
+  Users,
+  Compass,
   ArrowUpRight,
-  ArrowRight,
-  ChevronRight,
-  FileText,
+  Sparkles,
+  Layers,
+  Clock,
+  CheckCircle2,
   Calendar,
+  AlertCircle,
+  FileText,
+  DollarSign,
+  ChevronRight,
 } from 'lucide-react'
 
 function fmt(n) {
@@ -22,10 +26,34 @@ export default function Dashboard({ onNavigate }) {
   const [recentPayments, setRecentPayments] = useState([])
   const [activeProjectsList, setActiveProjectsList] = useState([])
   const [loading, setLoading] = useState(true)
-  const [timeframe, setTimeframe] = useState('Monthly')
+  const [timeframe, setTimeframe] = useState('Week')
+  const [showForecast, setShowForecast] = useState(true)
 
   useEffect(() => {
     fetchData()
+
+    // Realtime listener for live sync
+    const channel = supabase
+      .channel('realtime-dashboard-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payments' },
+        () => {
+          fetchData()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'projects' },
+        () => {
+          fetchData()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const fetchData = async () => {
@@ -51,18 +79,24 @@ export default function Dashboard({ onNavigate }) {
       const totalBudget = projectsList.reduce((s, p) => s + Number(p.total_amount || 0), 0)
       const totalOutstanding = Math.max(0, totalBudget - totalRevenue)
       const activeProjects = projectsList.filter((p) => p.status === 'Active')
+      const completedProjects = projectsList.filter((p) => p.status === 'Completed')
+
+      const collectionRate = totalBudget > 0 ? Math.round((totalRevenue / totalBudget) * 100) : 0
+      const avgContract = projectsList.length > 0 ? Math.round(totalBudget / projectsList.length) : 0
 
       setStats({
         clientsCount: clientsList.length,
         totalProjects: projectsList.length,
         activeCount: activeProjects.length,
+        completedCount: completedProjects.length,
         totalRevenue,
         totalBudget,
         totalOutstanding,
+        collectionRate,
+        avgContract,
         paymentsCount: paymentsList.length,
       })
 
-      // Recent 5 payments
       const recent = paymentsList.slice(0, 5).map((p) => {
         const prj = projectMap.get(p.project_id)
         return {
@@ -79,386 +113,338 @@ export default function Dashboard({ onNavigate }) {
     setLoading(false)
   }
 
-  if (loading) {
+  if (loading && !stats) {
     return (
       <div className="loading">
-        <div className="spinner" /> Loading dashboard analytics...
+        <div className="spinner" /> Loading live design analytics...
       </div>
     )
   }
 
   return (
     <div>
-      {/* TOP ROW: Hero Mint Card + 4 Satellite Metric Cards (matching reference image) */}
-      <div className="stats-grid-dashboard">
-        {/* 1. Large Mint Gradient Hero Card */}
-        <div className="hero-mint-card">
-          <div>
-            <div className="hero-header">
-              <span className="hero-title">Total Collected Revenue</span>
-              <span className="hero-badge">
-                <ArrowUpRight size={13} /> +18.4%
-              </span>
+      {/* 4 TOP OBSIDIAN CARDS (Matching WindPulse: Total Energy, Active Turbines, Wind Speed, Efficiency) */}
+      <div className="obsidian-grid-4">
+        {/* 1. Total Revenue Collected */}
+        <div className="obsidian-card">
+          <div className="obsidian-card-top">
+            <span className="obsidian-card-label">Total Revenue Collected</span>
+            <div className="glow-badge-icon emerald">
+              <TrendingUp size={18} strokeWidth={2.5} />
             </div>
-
-            <div className="hero-amount">{fmt(stats?.totalRevenue)}</div>
-
-            {/* Segmented meter dots */}
-            <div className="hero-dots">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((d) => (
-                <div key={d} className={`hero-dot ${d <= 7 ? 'filled' : ''}`} />
-              ))}
-            </div>
-
-            <p style={{ fontSize: 12, lineHeight: 1.4, color: 'rgba(7, 38, 24, 0.85)', marginBottom: 16 }}>
-              Total client payments received for active and ongoing architectural planning projects.
-            </p>
           </div>
-
-          <div className="hero-footer">
-            <button
-              onClick={() => onNavigate('payments')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#072618',
-                fontSize: 12,
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-              }}
-            >
-              View details <ChevronRight size={14} />
-            </button>
-            <button
-              className="hero-action-btn"
-              onClick={() => onNavigate('payments')}
-            >
-              <Calendar size={13} />
-              <span>Mark Payment</span>
-            </button>
+          <div className="obsidian-card-val" style={{ color: 'var(--primary)' }}>
+            {fmt(stats?.totalRevenue)}
+          </div>
+          <div className="obsidian-card-footer">
+            <span className="trend-pill positive">
+              <ArrowUpRight size={13} /> +18.4% Since last month
+            </span>
+            <span className="card-mini-link" onClick={() => onNavigate('payments')}>
+              View More ↗
+            </span>
           </div>
         </div>
 
-        {/* 2. Top-Right Column 1: Sparkline Card & Donut Status */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Total Outstanding Card with Wavy Curve */}
-          <div className="stat-metric-card" style={{ flex: 1 }}>
-            <div className="stat-metric-header">
-              <span className="stat-metric-title">Remaining to Collect</span>
-              <span className="badge badge-hold" style={{ fontSize: 10, padding: '2px 8px' }}>
-                Pending
-              </span>
+        {/* 2. Active Projects */}
+        <div className="obsidian-card">
+          <div className="obsidian-card-top">
+            <span className="obsidian-card-label">Active House Designs</span>
+            <div className="glow-badge-icon purple">
+              <FolderOpen size={18} strokeWidth={2.5} />
             </div>
-            <div className="stat-metric-val" style={{ color: '#f43f5e' }}>
-              {fmt(stats?.totalOutstanding)}
-            </div>
-            <div className="stat-metric-sub">Client balance across all projects</div>
-
-            {/* Glowing Wavy Line SVG */}
-            <svg className="sparkline-svg" viewBox="0 0 200 45">
-              <defs>
-                <linearGradient id="gradRed" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="#fb7185" stopOpacity="1" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M 0 35 Q 35 15, 70 30 T 140 10 T 200 20"
-                fill="none"
-                stroke="url(#gradRed)"
-                strokeWidth="3.5"
-                strokeLinecap="round"
-              />
-            </svg>
           </div>
+          <div className="obsidian-card-val">
+            {stats?.activeCount}/{stats?.totalProjects} <span className="unit">Plans</span>
+          </div>
+          <div className="obsidian-card-footer">
+            <span>Last plan updated 2h ago</span>
+            <span className="card-mini-link" onClick={() => onNavigate('projects')}>
+              View Plans ↗
+            </span>
+          </div>
+        </div>
 
-          {/* Donut Distribution Breakdown */}
-          <div className="stat-metric-card" style={{ flex: 1 }}>
-            <div className="stat-metric-header">
-              <span className="stat-metric-title">Project Portfolio</span>
-              <span style={{ fontSize: 11, color: '#00d293', fontWeight: 700 }}>
-                {stats?.totalProjects} Total
+        {/* 3. Outstanding Balance */}
+        <div className="obsidian-card">
+          <div className="obsidian-card-top">
+            <span className="obsidian-card-label">Outstanding Client Due</span>
+            <div className="glow-badge-icon amber">
+              <Clock size={18} strokeWidth={2.5} />
+            </div>
+          </div>
+          <div className="obsidian-card-val" style={{ color: Number(stats?.totalOutstanding) > 0 ? '#f43f5e' : 'var(--primary)' }}>
+            {fmt(stats?.totalOutstanding)}
+          </div>
+          <div className="obsidian-card-footer">
+            <span className="trend-pill negative" style={{ color: Number(stats?.totalOutstanding) > 0 ? '#f43f5e' : 'var(--primary)' }}>
+              {Number(stats?.totalOutstanding) > 0 ? 'Pending milestones' : 'All cleared'}
+            </span>
+            <span className="card-mini-link" onClick={() => onNavigate('payments')}>
+              Collect ↗
+            </span>
+          </div>
+        </div>
+
+        {/* 4. Collection Efficiency */}
+        <div className="obsidian-card">
+          <div className="obsidian-card-top">
+            <span className="obsidian-card-label">Collection Efficiency</span>
+            <div className="glow-badge-icon blue">
+              <Compass size={18} strokeWidth={2.5} />
+            </div>
+          </div>
+          <div className="obsidian-card-val">
+            {stats?.collectionRate}% <span className="unit">Rate</span>
+          </div>
+          <div className="obsidian-card-footer">
+            <span>Target: 85% overall</span>
+            <span className="card-mini-link">Efficiency ↗</span>
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN SECTION: Wave Chart (Left) + 2x2 Conditions Matrix (Right) (Exact Match to WindPulse) */}
+      <div className="obsidian-main-row">
+        {/* Left: Wave Chart Card ("Energy Output & AI Prediction" style) */}
+        <div className="wave-chart-card" style={{ position: 'relative' }}>
+          <div className="wave-chart-header">
+            <div>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>
+                Cashflow &amp; Forecast Revenue
+              </h2>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                Weekly billing trends &amp; architectural milestone projections
               </span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 4 }}>
-              {/* Mini SVG Donut */}
-              <svg width="60" height="60" viewBox="0 0 36 36" style={{ flexShrink: 0 }}>
-                <circle cx="18" cy="18" r="14" fill="none" stroke="#232d42" strokeWidth="4.5" />
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="14"
-                  fill="none"
-                  stroke="#00d293"
-                  strokeWidth="4.5"
-                  strokeDasharray="60 100"
-                  strokeLinecap="round"
-                />
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="14"
-                  fill="none"
-                  stroke="#3b82f6"
-                  strokeWidth="4.5"
-                  strokeDasharray="25 100"
-                  strokeDashoffset="-60"
-                  strokeLinecap="round"
-                />
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="14"
-                  fill="none"
-                  stroke="#ffb547"
-                  strokeWidth="4.5"
-                  strokeDasharray="15 100"
-                  strokeDashoffset="-85"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', fontSize: 11 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d293' }} />
-                  <span style={{ color: '#94a3b8' }}>Active ({stats?.activeCount})</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#3b82f6' }} />
-                  <span style={{ color: '#94a3b8' }}>Completed</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffb547' }} />
-                  <span style={{ color: '#94a3b8' }}>On Hold</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#8b5cf6' }} />
-                  <span style={{ color: '#94a3b8' }}>Planning</span>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div className="pill-tabs">
+                {['Week', 'Month', 'Year'].map((p) => (
+                  <button
+                    key={p}
+                    className={`pill-tab ${timeframe === p ? 'active' : ''}`}
+                    onClick={() => setTimeframe(p)}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+
+              {/* Forecast Toggle */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  fontSize: 11,
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                }}
+                onClick={() => setShowForecast(!showForecast)}
+              >
+                <span>Forecast</span>
+                <div
+                  style={{
+                    width: 32,
+                    height: 18,
+                    borderRadius: 99,
+                    background: showForecast ? 'var(--primary)' : 'var(--bg-input)',
+                    border: '1px solid var(--border-color)',
+                    position: 'relative',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 14,
+                      height: 14,
+                      borderRadius: '50%',
+                      background: showForecast ? '#0c1c14' : 'var(--text-muted)',
+                      position: 'absolute',
+                      top: 1,
+                      left: showForecast ? 15 : 2,
+                      transition: 'all 0.2s',
+                    }}
+                  />
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* 3. Top-Right Column 2: Bar Chart Card & Total Clients */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Active House Designs with Bar Indicator */}
-          <div className="stat-metric-card" style={{ flex: 1 }}>
-            <div className="stat-metric-header">
-              <span className="stat-metric-title">Active House Designs</span>
-              <span className="badge badge-active" style={{ fontSize: 10 }}>
-                In Progress
-              </span>
-            </div>
-            <div className="stat-metric-val">{stats?.activeCount}</div>
-            <div className="stat-metric-sub">Under architectural drafting</div>
+          {/* SVG Wave Chart */}
+          <div style={{ position: 'relative', width: '100%', height: 230 }}>
+            <svg width="100%" height="100%" viewBox="0 0 700 230" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="emeraldWave" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#00d293" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#00d293" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
 
-            {/* Vertical Bar Chart Graphic */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 42, marginTop: 10 }}>
-              {[35, 60, 45, 80, 50, 90, 75, 95, 60].map((h, i) => (
-                <div
-                  key={i}
-                  style={{
-                    flex: 1,
-                    height: `${h}%`,
-                    background: i === 7 ? '#00d293' : '#232d42',
-                    borderRadius: '3px 3px 0 0',
-                    boxShadow: i === 7 ? '0 0 10px rgba(0, 210, 147, 0.4)' : 'none',
-                  }}
-                />
-              ))}
-            </div>
-          </div>
+              {/* Grid Lines */}
+              <line x1="0" y1="50" x2="700" y2="50" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.4" />
+              <line x1="0" y1="100" x2="700" y2="100" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.4" />
+              <line x1="0" y1="150" x2="700" y2="150" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.4" />
 
-          {/* Total Registered Clients */}
-          <div className="stat-metric-card" style={{ flex: 1 }}>
-            <div className="stat-metric-header">
-              <span className="stat-metric-title">Registered Clients</span>
-              <button
-                className="btn btn-outline btn-sm"
-                style={{ padding: '3px 8px', fontSize: 11 }}
-                onClick={() => onNavigate('clients')}
-              >
-                View
-              </button>
-            </div>
-            <div className="stat-metric-val">{stats?.clientsCount}</div>
-            <div className="stat-metric-sub">Clients actively managing projects</div>
+              {/* Vertical Dashed Marker at Thursday */}
+              <line x1="380" y1="30" x2="380" y2="210" stroke="var(--primary)" strokeWidth="1.5" strokeDasharray="4 4" opacity="0.7" />
 
-            {/* Glowing Cyan Line */}
-            <svg className="sparkline-svg" viewBox="0 0 200 45">
+              {/* Solid Filled Wave Area */}
               <path
-                d="M 0 30 Q 50 40, 100 20 T 200 15"
+                d="M 0 180 Q 90 190, 180 140 T 360 110 T 520 70 L 700 130 L 700 230 L 0 230 Z"
+                fill="url(#emeraldWave)"
+              />
+
+              {/* Solid Glowing Emerald Wave */}
+              <path
+                d="M 0 180 Q 90 190, 180 140 T 360 110 T 520 70 L 700 130"
                 fill="none"
                 stroke="#00d293"
                 strokeWidth="3.5"
                 strokeLinecap="round"
               />
-            </svg>
-          </div>
-        </div>
-      </div>
 
-      {/* MIDDLE SECTION: Large Smooth Wavy Sales Revenue Chart (Matching Reference) */}
-      <div className="chart-row">
-        {/* Main Wave Chart */}
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <h2>Cashflow &amp; Revenue Trends</h2>
-              <span style={{ fontSize: 12, color: '#94a3b8' }}>
-                Financial overview for 2026
-              </span>
-            </div>
-            <div className="period-tabs">
-              {['Monthly', 'Weekly', 'Daily'].map((t) => (
-                <button
-                  key={t}
-                  className={`period-tab ${timeframe === t ? 'active' : ''}`}
-                  onClick={() => setTimeframe(t)}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="card-body">
-            {/* Custom SVG Glowing Wave Chart */}
-            <div style={{ position: 'relative', width: '100%', height: 220 }}>
-              <svg
-                width="100%"
-                height="100%"
-                viewBox="0 0 800 220"
-                preserveAspectRatio="none"
-              >
-                <defs>
-                  {/* Neon Glow Gradient */}
-                  <linearGradient id="waveGlow" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#00d293" stopOpacity="0.28" />
-                    <stop offset="100%" stopColor="#00d293" stopOpacity="0.0" />
-                  </linearGradient>
-                  {/* Grid lines */}
-                  <pattern id="gridPattern" width="80" height="40" patternUnits="userSpaceOnUse">
-                    <line x1="0" y1="40" x2="80" y2="40" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
-                  </pattern>
-                </defs>
-
-                <rect width="100%" height="100%" fill="url(#gridPattern)" />
-
-                {/* Shaded Area */}
+              {/* Secondary Dashed Cyan Forecast Line (Matching Screenshot) */}
+              {showForecast && (
                 <path
-                  d="M 0 170 Q 120 180, 220 130 T 420 80 T 540 140 T 680 70 L 800 120 L 800 220 L 0 220 Z"
-                  fill="url(#waveGlow)"
-                />
-
-                {/* Glowing Smooth Wave Path */}
-                <path
-                  d="M 0 170 Q 120 180, 220 130 T 420 80 T 540 140 T 680 70 L 800 120"
+                  d="M 0 150 Q 120 100, 240 160 T 480 80 L 700 60"
                   fill="none"
-                  stroke="#00d293"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                />
-
-                {/* Second Accent Wave (Blue) */}
-                <path
-                  d="M 0 190 Q 150 140, 300 160 T 600 100 L 800 150"
-                  fill="none"
-                  stroke="#3b82f6"
+                  stroke="#38bdf8"
                   strokeWidth="2"
                   strokeDasharray="4 4"
-                  opacity="0.6"
+                  opacity="0.75"
                 />
+              )}
 
-                {/* Peak Indicator Dot at 680, 70 */}
-                <circle cx="680" cy="70" r="7" fill="#00d293" />
-                <circle cx="680" cy="70" r="14" fill="#00d293" opacity="0.3" />
-                <line x1="680" y1="70" x2="680" y2="220" stroke="#00d293" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.6" />
-              </svg>
+              {/* Marker Points */}
+              <circle cx="380" cy="110" r="6" fill="#00d293" />
+              <circle cx="380" cy="110" r="12" fill="#00d293" opacity="0.25" />
+            </svg>
 
-              {/* Peak Tooltip Badge */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '12%',
-                  right: '12%',
-                  background: '#131926',
-                  border: '1px solid #00d293',
-                  borderRadius: 8,
-                  padding: '4px 10px',
-                  boxShadow: '0 4px 16px rgba(0, 210, 147, 0.3)',
-                }}
-              >
-                <div style={{ fontSize: 10, color: '#94a3b8' }}>Peak Milestone</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#00d293' }}>Rs. 850,000</div>
+            {/* Floating Milestone Tooltip (Matching Screenshot) */}
+            <div className="wave-tooltip-box">
+              <div className="wave-tooltip-date">Milestone Inspection • Thu 02, 2026</div>
+              <div className="wave-tooltip-item">
+                <span style={{ color: 'var(--primary)', fontWeight: 600 }}>• Collected:</span>
+                <strong>Rs. 350,000</strong>
+              </div>
+              <div className="wave-tooltip-item">
+                <span style={{ color: '#38bdf8' }}>• Projection:</span>
+                <span style={{ color: 'var(--text-secondary)' }}>Rs. 500,000</span>
               </div>
             </div>
+          </div>
 
-            {/* Months Label Bar */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                fontSize: 11,
-                color: '#64748b',
-                marginTop: 10,
-                padding: '0 8px',
-              }}
-            >
-              {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m) => (
-                <span key={m} style={{ color: m === 'Oct' ? '#00d293' : '#64748b', fontWeight: m === 'Oct' ? 700 : 400 }}>
-                  {m}
-                </span>
-              ))}
-            </div>
+          {/* Days Bar */}
+          <div className="chart-days-bar">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+              <span
+                key={d}
+                style={{
+                  color: d === 'Thu' ? 'var(--primary)' : 'var(--text-muted)',
+                  fontWeight: d === 'Thu' ? 700 : 400,
+                }}
+              >
+                {d}
+              </span>
+            ))}
           </div>
         </div>
 
-        {/* Side Performance / Best Selling Plans */}
-        <div className="card">
-          <div className="card-header">
-            <h2>Active Design Progress</h2>
-            <button
-              className="btn btn-outline btn-sm"
-              style={{ padding: '4px 10px' }}
-              onClick={() => onNavigate('projects')}
-            >
-              All Projects
-            </button>
-          </div>
-          <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {activeProjectsList.map((p) => {
-              const total = Number(p.total_amount || 0)
-              return (
-                <div key={p.id}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <strong style={{ fontSize: 13, color: '#ffffff' }}>{p.project_name}</strong>
-                    <span style={{ fontSize: 12, color: '#00d293', fontWeight: 700 }}>
-                      {fmt(total)}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#94a3b8', marginBottom: 4 }}>
-                    <span>{p.project_type}</span>
-                    <span>{p.status}</span>
-                  </div>
-                  <div className="progress-bar">
-                    <div className="progress-fill" style={{ width: p.status === 'Completed' ? '100%' : '65%' }} />
+        {/* Right: Portfolio Metrics Grid ("Atmospheric Conditions" style) */}
+        <div className="obsidian-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div className="obsidian-card-top">
+              <div>
+                <span className="obsidian-card-label">Agency Metrics</span>
+                <h3 style={{ fontSize: 16, fontWeight: 700, marginTop: 2, color: 'var(--text-primary)' }}>
+                  Design Operations
+                </h3>
+              </div>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Live</span>
+            </div>
+
+            {/* 2x2 Inner Capsule Grid */}
+            <div className="conditions-inner-grid">
+              <div className="condition-cell">
+                <div className="condition-cell-top">
+                  <span className="condition-cell-title">Settled Plans</span>
+                  <div className="glow-badge-icon emerald" style={{ width: 26, height: 26 }}>
+                    <CheckCircle2 size={13} />
                   </div>
                 </div>
-              )
-            })}
+                <div className="condition-cell-val">
+                  {stats?.completedCount} <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Plans</span>
+                </div>
+              </div>
+
+              <div className="condition-cell">
+                <div className="condition-cell-top">
+                  <span className="condition-cell-title">Total Clients</span>
+                  <div className="glow-badge-icon blue" style={{ width: 26, height: 26 }}>
+                    <Users size={13} />
+                  </div>
+                </div>
+                <div className="condition-cell-val">
+                  {stats?.clientsCount} <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Registered</span>
+                </div>
+              </div>
+
+              <div className="condition-cell">
+                <div className="condition-cell-top">
+                  <span className="condition-cell-title">Avg Contract</span>
+                  <div className="glow-badge-icon amber" style={{ width: 26, height: 26 }}>
+                    <Layers size={13} />
+                  </div>
+                </div>
+                <div className="condition-cell-val" style={{ fontSize: 15 }}>
+                  {fmt(stats?.avgContract)}
+                </div>
+              </div>
+
+              <div className="condition-cell">
+                <div className="condition-cell-top">
+                  <span className="condition-cell-title">Sync State</span>
+                  <div className="glow-badge-icon purple" style={{ width: 26, height: 26 }}>
+                    <Compass size={13} />
+                  </div>
+                </div>
+                <div className="condition-cell-val" style={{ fontSize: 15, color: 'var(--primary)' }}>
+                  100% <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Realtime</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Insights Card at Bottom Right */}
+          <div
+            style={{
+              background: 'var(--bg-card-sub)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 14,
+              padding: '12px 14px',
+              marginTop: 16,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <Sparkles size={14} color="var(--primary)" />
+              <strong style={{ fontSize: 12, color: 'var(--text-primary)' }}>AI Cashflow Forecast</strong>
+              <span className="badge badge-active" style={{ fontSize: 9, padding: '1px 6px' }}>+12%</span>
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+              Next week projected collection: <strong>Rs. 750,000</strong> from detailed MEP milestone inspections.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* BOTTOM SECTION: Recent Client Payments Table */}
+      {/* RECENT PAYMENTS LOG TABLE */}
       <div className="card">
         <div className="card-header">
-          <h2>Recent Payment Transactions</h2>
+          <h2>Recent Client Payments</h2>
           <button className="btn btn-primary btn-sm" onClick={() => onNavigate('payments')}>
-            Mark New Payment
+            View All Payments
           </button>
         </div>
         <div className="table-wrapper">
@@ -466,18 +452,18 @@ export default function Dashboard({ onNavigate }) {
             <thead>
               <tr>
                 <th>Client Name</th>
-                <th>House Design Project</th>
+                <th>Architectural Project</th>
                 <th>Amount Received</th>
-                <th>Method</th>
-                <th>Date</th>
+                <th>Payment Method</th>
+                <th>Transaction Date</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {recentPayments.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: 30, color: '#64748b' }}>
-                    No payments recorded yet.
+                  <td colSpan={6} style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>
+                    No payment transactions recorded yet.
                   </td>
                 </tr>
               ) : (
@@ -486,31 +472,24 @@ export default function Dashboard({ onNavigate }) {
                     <td>
                       <strong>{p.clientName}</strong>
                     </td>
-                    <td style={{ color: '#94a3b8' }}>{p.projectName}</td>
+                    <td style={{ color: 'var(--text-secondary)' }}>{p.projectName}</td>
                     <td>
-                      <span style={{ fontWeight: 800, color: '#00d293', fontSize: 14 }}>
+                      <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: 14 }}>
                         {fmt(p.amount)}
                       </span>
                     </td>
                     <td>
-                      <span
-                        style={{
-                          background: '#101522',
-                          border: '1px solid #232d42',
-                          padding: '3px 8px',
-                          borderRadius: 6,
-                          fontSize: 12,
-                          color: '#94a3b8',
-                        }}
-                      >
+                      <span className="badge badge-active" style={{ fontSize: 11 }}>
                         {p.payment_method}
                       </span>
                     </td>
-                    <td style={{ color: '#94a3b8', fontSize: 12 }}>
+                    <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>
                       {new Date(p.payment_date).toLocaleDateString('en-GB')}
                     </td>
                     <td>
-                      <span className="badge badge-active">✓ Received</span>
+                      <span style={{ color: 'var(--primary)', fontSize: 12, fontWeight: 700 }}>
+                        ✓ Confirmed
+                      </span>
                     </td>
                   </tr>
                 ))

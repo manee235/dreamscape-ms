@@ -11,8 +11,10 @@ import {
   Download,
   MessageCircle,
   FileText,
-  Send,
-  ExternalLink,
+  DollarSign,
+  ArrowUpRight,
+  Clock,
+  Check,
 } from 'lucide-react'
 import {
   generateReceiptPDF,
@@ -28,7 +30,7 @@ const emptyPayment = {
   client_id: '',
   amount: '',
   payment_date: new Date().toISOString().split('T')[0],
-  payment_method: 'Cash',
+  payment_method: 'Bank Transfer',
   reference_number: '',
   notes: '',
 }
@@ -50,6 +52,29 @@ export default function Payments() {
 
   useEffect(() => {
     fetchData()
+
+    // Supabase Realtime channel for instant syncing without page reload!
+    const channel = supabase
+      .channel('realtime-payments-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payments' },
+        () => {
+          fetchData()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'projects' },
+        () => {
+          fetchData()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const fetchData = async () => {
@@ -154,7 +179,6 @@ export default function Payments() {
     }))
   }
 
-  // Open WhatsApp with pre-filled message
   const sendWhatsApp = (receiptData) => {
     const phone = formatWhatsAppPhone(receiptData.clientPhone)
     const msg = generateWhatsAppMessage(receiptData)
@@ -192,7 +216,6 @@ export default function Payments() {
     const { data: inserted, error } = await supabase.from('payments').insert(payload).select().single()
 
     if (!error) {
-      // Calculate updated figures
       const totalAmount = Number(selectedProject?.total_amount || 0)
       const previousPaid = Number(selectedProject?.paid_amount || 0)
       const newTotalPaid = previousPaid + paymentAmount
@@ -215,17 +238,14 @@ export default function Payments() {
         notes: form.notes,
       }
 
-      // 1. Automatically generate and download PDF
       try {
         generateReceiptPDF(receiptPayload)
       } catch (pdfErr) {
         console.error('PDF Generation error:', pdfErr)
       }
 
-      // 2. Set success modal state & open
       setSuccessReceipt(receiptPayload)
       setShowSuccessModal(true)
-
       closeModal()
       fetchData()
     } else {
@@ -263,54 +283,89 @@ export default function Payments() {
         </div>
       )}
 
-      {/* Summary Cards */}
-      <div className="stats-grid" style={{ marginBottom: 24 }}>
-        <div className="stat-card">
-          <div className="stat-icon green">
-            <TrendingUp size={26} />
-          </div>
-          <div className="stat-info">
-            <div className="stat-value" style={{ fontSize: 18 }}>
-              {formatLKR(totalCollected)}
+      {/* OBSIDIAN TOP STATS CAPSULES (Matching WindPulse Design) */}
+      <div className="obsidian-grid-4" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: 24 }}>
+        {/* 1. Total Collected */}
+        <div className="obsidian-card">
+          <div className="obsidian-card-top">
+            <span className="obsidian-card-label">Total Revenue Collected</span>
+            <div className="glow-badge-icon emerald">
+              <TrendingUp size={18} strokeWidth={2.5} />
             </div>
-            <div className="stat-label">Total Collected</div>
+          </div>
+          <div className="obsidian-card-val" style={{ color: 'var(--primary)' }}>
+            {formatLKR(totalCollected)}
+          </div>
+          <div className="obsidian-card-footer">
+            <span className="trend-pill positive">
+              <ArrowUpRight size={13} /> +18.4% received to date
+            </span>
+            <span className="card-mini-link">Settled ↗</span>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon red">
-            <AlertCircle size={26} />
-          </div>
-          <div className="stat-info">
-            <div className="stat-value" style={{ fontSize: 18 }}>
-              {formatLKR(totalOutstanding)}
+
+        {/* 2. Total Outstanding */}
+        <div className="obsidian-card">
+          <div className="obsidian-card-top">
+            <span className="obsidian-card-label">Total Outstanding Balance</span>
+            <div className="glow-badge-icon amber">
+              <Clock size={18} strokeWidth={2.5} />
             </div>
-            <div className="stat-label">Total Outstanding</div>
+          </div>
+          <div className="obsidian-card-val" style={{ color: totalOutstanding > 0 ? '#f43f5e' : 'var(--primary)' }}>
+            {formatLKR(totalOutstanding)}
+          </div>
+          <div className="obsidian-card-footer">
+            <span className="trend-pill negative" style={{ color: totalOutstanding > 0 ? '#f43f5e' : 'var(--primary)' }}>
+              {totalOutstanding > 0 ? 'Due across active plans' : '✓ All accounts settled'}
+            </span>
+            <span className="card-mini-link">Pending ↗</span>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon amber">
-            <CreditCard size={26} />
+
+        {/* 3. Payment Records Count */}
+        <div className="obsidian-card">
+          <div className="obsidian-card-top">
+            <span className="obsidian-card-label">Logged Transactions</span>
+            <div className="glow-badge-icon blue">
+              <CreditCard size={18} strokeWidth={2.5} />
+            </div>
           </div>
-          <div className="stat-info">
-            <div className="stat-value">{payments.length}</div>
-            <div className="stat-label">Payment Records</div>
+          <div className="obsidian-card-val">
+            {payments.length} <span className="unit">Records</span>
+          </div>
+          <div className="obsidian-card-footer">
+            <span className="trend-pill positive">
+              <Check size={13} /> Synced via Supabase Realtime
+            </span>
+            <span className="card-mini-link">Live ↗</span>
           </div>
         </div>
       </div>
 
-      {/* Per-Project Balance Summary */}
-      <div className="card" style={{ marginBottom: 24 }}>
+      {/* PROJECT BALANCE SUMMARY TABLE */}
+      <div className="card">
         <div className="card-header">
-          <h2>Project Balance Summary</h2>
+          <div>
+            <h2>Project Balance Summary</h2>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+              Track real-time client payments, remaining debt, and settlement progress
+            </p>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={openAdd}>
+            <Plus size={15} /> Mark Payment
+          </button>
         </div>
-        <div className="table-wrapper">
+
+        {/* Desktop Table */}
+        <div className="table-wrapper table-desktop-only">
           <table>
             <thead>
               <tr>
                 <th>Project</th>
                 <th>Client</th>
-                <th>Total Amount</th>
-                <th>Paid</th>
+                <th>Total Contract</th>
+                <th>Paid to Date</th>
                 <th>Remaining</th>
                 <th>Progress</th>
               </tr>
@@ -319,36 +374,37 @@ export default function Payments() {
               {projects.map((p) => {
                 const pct =
                   p.total_amount > 0 ? Math.min(100, (p.paid_amount / p.total_amount) * 100) : 0
+                const isPaid = Number(p.remaining_amount) <= 0
+
                 return (
                   <tr key={p.project_id}>
                     <td>
-                      <div style={{ fontWeight: 700 }}>{p.project_name}</div>
-                      <div style={{ fontSize: 12, color: '#94a3b8' }}>{p.project_type}</div>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{p.project_name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.project_type}</div>
                     </td>
                     <td>
-                      <div>{p.client_name}</div>
+                      <div style={{ fontWeight: 600 }}>{p.client_name}</div>
                       {p.client_phone && (
-                        <div style={{ fontSize: 12, color: '#64748b' }}>{p.client_phone}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.client_phone}</div>
                       )}
                     </td>
                     <td style={{ fontWeight: 600 }}>{formatLKR(p.total_amount)}</td>
-                    <td style={{ color: '#16a34a', fontWeight: 600 }}>{formatLKR(p.paid_amount)}</td>
+                    <td style={{ color: 'var(--primary)', fontWeight: 700 }}>{formatLKR(p.paid_amount)}</td>
                     <td>
                       <span
                         style={{
-                          fontWeight: 700,
-                          color: Number(p.remaining_amount) <= 0 ? '#16a34a' : '#dc2626',
-                          fontSize: 15,
+                          fontWeight: 800,
+                          color: isPaid ? 'var(--primary)' : '#f43f5e',
+                          fontSize: 14,
                         }}
                       >
-                        {Number(p.remaining_amount) <= 0
-                          ? '✓ Fully Paid'
-                          : formatLKR(p.remaining_amount)}
+                        {isPaid ? '✓ Fully Paid' : formatLKR(p.remaining_amount)}
                       </span>
                     </td>
                     <td style={{ minWidth: 120 }}>
-                      <div style={{ fontSize: 11, color: '#64748b', marginBottom: 2 }}>
-                        {pct.toFixed(0)}%
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>
+                        <span>{pct.toFixed(0)}%</span>
+                        <span>{isPaid ? 'Completed' : 'Active'}</span>
                       </div>
                       <div className="progress-bar">
                         <div className="progress-fill" style={{ width: `${pct}%` }} />
@@ -360,130 +416,223 @@ export default function Payments() {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Native Card View (for screens <= 768px) */}
+        <div className="mobile-cards-list" style={{ padding: 16 }}>
+          {projects.map((p) => {
+            const pct = p.total_amount > 0 ? Math.min(100, (p.paid_amount / p.total_amount) * 100) : 0
+            const isPaid = Number(p.remaining_amount) <= 0
+            return (
+              <div key={p.project_id} className="mobile-data-card">
+                <div className="mobile-data-card-header">
+                  <div>
+                    <strong style={{ fontSize: 14 }}>{p.project_name}</strong>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{p.client_name} • {p.client_phone}</div>
+                  </div>
+                  <span className={isPaid ? 'badge badge-active' : 'badge badge-hold'}>
+                    {isPaid ? 'Settled' : 'Due'}
+                  </span>
+                </div>
+                <div className="mobile-data-card-row">
+                  <span>Total Value:</span>
+                  <strong>{formatLKR(p.total_amount)}</strong>
+                </div>
+                <div className="mobile-data-card-row">
+                  <span>Paid:</span>
+                  <strong style={{ color: 'var(--primary)' }}>{formatLKR(p.paid_amount)}</strong>
+                </div>
+                <div className="mobile-data-card-row">
+                  <span>Remaining:</span>
+                  <strong style={{ color: isPaid ? 'var(--primary)' : '#f43f5e' }}>
+                    {isPaid ? '✓ Fully Paid' : formatLKR(p.remaining_amount)}
+                  </strong>
+                </div>
+                <div className="progress-bar">
+                  <div className="progress-fill" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Payment Records Header */}
+      {/* PAYMENT TRANSACTION HISTORY TABLE */}
       <div className="filter-bar">
         <input
           className="search-input"
-          placeholder="Search payments by client, project or reference..."
+          placeholder="Search by client, project, or reference number..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button className="btn btn-success" onClick={openAdd}>
+        <button className="btn btn-primary" onClick={openAdd}>
           <Plus size={16} /> Mark Payment
         </button>
       </div>
 
-      {loading ? (
-        <div className="loading">
-          <div className="spinner" /> Loading payments...
+      <div className="card">
+        <div className="card-header">
+          <h2>Payment Transaction Log ({filtered.length})</h2>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            PDF receipts and WhatsApp ready
+          </span>
         </div>
-      ) : (
-        <div className="card">
-          <div className="card-header">
-            <h2>Payment History ({filtered.length})</h2>
-          </div>
-          {filtered.length === 0 ? (
-            <div className="empty-state">
-              <CreditCard size={48} />
-              <h3>No payment records</h3>
-              <p>Use "Mark Payment" to record a client payment.</p>
-            </div>
-          ) : (
-            <div className="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Client</th>
-                    <th>Project</th>
-                    <th>Amount Paid</th>
-                    <th>Method</th>
-                    <th>Reference</th>
-                    <th>Date</th>
-                    <th>Receipt &amp; WhatsApp</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((p) => {
-                    const rowReceiptData = {
-                      receiptNo: 'RCP-' + (p.id ? p.id.substring(0, 8).toUpperCase() : '001'),
-                      clientName: p.client_name,
-                      clientPhone: p.client_phone,
-                      clientEmail: p.client_email,
-                      projectName: p.project_name,
-                      projectType: p.project_type,
-                      amountPaid: Number(p.amount),
-                      totalAmount: p.project_total,
-                      totalPaid: p.project_paid_total,
-                      remainingAmount: p.project_remaining,
-                      paymentDate: p.payment_date,
-                      paymentMethod: p.payment_method,
-                      referenceNumber: p.reference_number,
-                      notes: p.notes,
-                    }
 
-                    return (
-                      <tr key={p.id}>
-                        <td>
-                          <strong>{p.client_name}</strong>
-                          {p.client_phone && (
-                            <div style={{ fontSize: 12, color: '#64748b' }}>{p.client_phone}</div>
-                          )}
-                        </td>
-                        <td style={{ color: '#64748b', fontSize: 13 }}>{p.project_name}</td>
-                        <td>
-                          <span style={{ fontWeight: 700, color: '#16a34a', fontSize: 15 }}>
-                            {formatLKR(p.amount)}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="badge" style={{ background: '#f1f5f9', color: '#475569' }}>
-                            {p.payment_method}
-                          </span>
-                        </td>
-                        <td style={{ color: '#64748b', fontSize: 13 }}>{p.reference_number || '—'}</td>
-                        <td style={{ color: '#64748b', fontSize: 13 }}>
-                          {new Date(p.payment_date).toLocaleDateString('en-GB')}
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            <button
-                              className="btn btn-outline btn-sm"
-                              title="Download PDF Receipt"
-                              onClick={() => generateReceiptPDF(rowReceiptData)}
-                            >
-                              <FileText size={14} color="#1a3c5e" /> PDF
-                            </button>
-                            <button
-                              className="btn btn-sm"
-                              style={{ background: '#25D366', color: 'white', border: 'none' }}
-                              title="Send WhatsApp Message"
-                              onClick={() => sendWhatsApp(rowReceiptData)}
-                            >
-                              <MessageCircle size={14} /> WhatsApp
-                            </button>
-                          </div>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <button
-                            className="btn btn-danger btn-sm"
-                            title="Delete record"
-                            onClick={() => handleDelete(p.id)}
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+        {/* Desktop Table */}
+        <div className="table-wrapper table-desktop-only">
+          <table>
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Project</th>
+                <th>Amount Paid</th>
+                <th>Method</th>
+                <th>Reference</th>
+                <th>Date</th>
+                <th>Receipt / WhatsApp</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((p) => {
+                const rowReceiptData = {
+                  receiptNo: 'RCP-' + (p.id ? p.id.substring(0, 8).toUpperCase() : '001'),
+                  clientName: p.client_name,
+                  clientPhone: p.client_phone,
+                  clientEmail: p.client_email,
+                  projectName: p.project_name,
+                  projectType: p.project_type,
+                  amountPaid: Number(p.amount),
+                  totalAmount: p.project_total,
+                  totalPaid: p.project_paid_total,
+                  remainingAmount: p.project_remaining,
+                  paymentDate: p.payment_date,
+                  paymentMethod: p.payment_method,
+                  referenceNumber: p.reference_number,
+                  notes: p.notes,
+                }
+
+                return (
+                  <tr key={p.id}>
+                    <td>
+                      <strong>{p.client_name}</strong>
+                      {p.client_phone && (
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.client_phone}</div>
+                      )}
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)' }}>{p.project_name}</td>
+                    <td>
+                      <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: 14 }}>
+                        {formatLKR(p.amount)}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="badge badge-active" style={{ fontSize: 11 }}>
+                        {p.payment_method}
+                      </span>
+                    </td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>{p.reference_number || '—'}</td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                      {new Date(p.payment_date).toLocaleDateString('en-GB')}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button
+                          className="btn btn-outline btn-sm"
+                          title="Download PDF"
+                          onClick={() => generateReceiptPDF(rowReceiptData)}
+                        >
+                          <FileText size={13} /> PDF
+                        </button>
+                        <button
+                          className="btn btn-sm"
+                          style={{ background: '#25D366', color: '#ffffff', border: 'none' }}
+                          title="Send to client WhatsApp"
+                          onClick={() => sendWhatsApp(rowReceiptData)}
+                        >
+                          <MessageCircle size={13} /> WhatsApp
+                        </button>
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        title="Delete"
+                        onClick={() => handleDelete(p.id)}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
-      )}
+
+        {/* Mobile View for Payment History */}
+        <div className="mobile-cards-list" style={{ padding: 16 }}>
+          {filtered.map((p) => {
+            const rowReceiptData = {
+              receiptNo: 'RCP-' + (p.id ? p.id.substring(0, 8).toUpperCase() : '001'),
+              clientName: p.client_name,
+              clientPhone: p.client_phone,
+              clientEmail: p.client_email,
+              projectName: p.project_name,
+              projectType: p.project_type,
+              amountPaid: Number(p.amount),
+              totalAmount: p.project_total,
+              totalPaid: p.project_paid_total,
+              remainingAmount: p.project_remaining,
+              paymentDate: p.payment_date,
+              paymentMethod: p.payment_method,
+              referenceNumber: p.reference_number,
+              notes: p.notes,
+            }
+
+            return (
+              <div key={p.id} className="mobile-data-card">
+                <div className="mobile-data-card-header">
+                  <div>
+                    <strong>{p.client_name}</strong>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.project_name}</div>
+                  </div>
+                  <strong style={{ color: 'var(--primary)', fontSize: 15 }}>{formatLKR(p.amount)}</strong>
+                </div>
+                <div className="mobile-data-card-row">
+                  <span>Method &amp; Ref:</span>
+                  <span>{p.payment_method} {p.reference_number ? `(${p.reference_number})` : ''}</span>
+                </div>
+                <div className="mobile-data-card-row">
+                  <span>Date:</span>
+                  <span>{new Date(p.payment_date).toLocaleDateString('en-GB')}</span>
+                </div>
+                <div className="mobile-data-card-actions">
+                  <button
+                    className="btn btn-outline btn-sm"
+                    style={{ flex: 1, justifyContent: 'center' }}
+                    onClick={() => generateReceiptPDF(rowReceiptData)}
+                  >
+                    <FileText size={13} /> PDF
+                  </button>
+                  <button
+                    className="btn btn-sm"
+                    style={{ flex: 1, justifyContent: 'center', background: '#25D366', color: '#fff' }}
+                    onClick={() => sendWhatsApp(rowReceiptData)}
+                  >
+                    <MessageCircle size={13} /> WhatsApp
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => handleDelete(p.id)}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
 
       {/* MARK PAYMENT MODAL */}
       {modal && (
@@ -501,7 +650,7 @@ export default function Payments() {
                 <div className="payment-summary">
                   <div className="payment-summary-item">
                     <div className="amount total">{formatLKR(selectedProject.total_amount)}</div>
-                    <div className="label">Total Amount</div>
+                    <div className="label">Total Contract</div>
                   </div>
                   <div className="payment-summary-item">
                     <div className="amount paid">{formatLKR(selectedProject.paid_amount)}</div>
@@ -511,7 +660,7 @@ export default function Payments() {
                     <div className="amount remaining">
                       {formatLKR(selectedProject.remaining_amount)}
                     </div>
-                    <div className="label">Remaining</div>
+                    <div className="label">Remaining Due</div>
                   </div>
                 </div>
               )}
@@ -603,14 +752,14 @@ export default function Payments() {
           className="modal-overlay"
           onClick={(e) => e.target === e.currentTarget && setShowSuccessModal(false)}
         >
-          <div className="modal" style={{ maxWidth: 520, textAlign: 'center' }}>
-            <div style={{ padding: '36px 28px 24px' }}>
+          <div className="modal" style={{ maxWidth: 500, textAlign: 'center' }}>
+            <div style={{ padding: '32px 24px 24px' }}>
               <div
                 style={{
-                  width: 64,
-                  height: 64,
+                  width: 58,
+                  height: 58,
                   background: 'rgba(0, 210, 147, 0.15)',
-                  color: '#00d293',
+                  color: 'var(--primary)',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -619,37 +768,37 @@ export default function Payments() {
                   boxShadow: '0 0 20px rgba(0, 210, 147, 0.25)',
                 }}
               >
-                <CheckCircle size={36} />
+                <CheckCircle size={32} />
               </div>
 
-              <h2 style={{ fontSize: 22, fontWeight: 800, color: '#ffffff', marginBottom: 6 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>
                 Payment Successfully Recorded!
               </h2>
-              <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 20 }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 20 }}>
                 Official PDF receipt has been generated and downloaded.
               </p>
 
               {/* Receipt Summary Card */}
               <div
                 style={{
-                  background: '#101522',
-                  border: '1px solid #232d42',
+                  background: 'var(--bg-card-sub)',
+                  border: '1px solid var(--border-color)',
                   borderRadius: 14,
-                  padding: 18,
+                  padding: 16,
                   textAlign: 'left',
-                  marginBottom: 24,
+                  marginBottom: 20,
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontSize: 13, color: '#94a3b8' }}>Client:</span>
-                  <strong style={{ fontSize: 13, color: '#ffffff' }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Client:</span>
+                  <strong style={{ fontSize: 13, color: 'var(--text-primary)' }}>
                     {successReceipt.clientName}{' '}
                     {successReceipt.clientPhone ? `(${successReceipt.clientPhone})` : ''}
                   </strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontSize: 13, color: '#94a3b8' }}>Project:</span>
-                  <span style={{ fontSize: 13, color: '#ffffff', fontWeight: 600 }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Project:</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600 }}>
                     {successReceipt.projectName}
                   </span>
                 </div>
@@ -658,18 +807,18 @@ export default function Payments() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     marginBottom: 8,
-                    borderTop: '1px dashed #232d42',
+                    borderTop: '1px dashed var(--border-color)',
                     paddingTop: 8,
                   }}
                 >
-                  <span style={{ fontSize: 13, color: '#94a3b8' }}>Amount Paid:</span>
-                  <strong style={{ fontSize: 15, color: '#00d293' }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Amount Paid:</span>
+                  <strong style={{ fontSize: 15, color: 'var(--primary)' }}>
                     {formatLKR(successReceipt.amountPaid)}
                   </strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontSize: 13, color: '#94a3b8' }}>Total Contract Value:</span>
-                  <span style={{ fontSize: 13, color: '#ffffff' }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Total Contract Value:</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-primary)' }}>
                     {formatLKR(successReceipt.totalAmount)}
                   </span>
                 </div>
@@ -677,17 +826,17 @@ export default function Payments() {
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    borderTop: '1px solid #232d42',
+                    borderTop: '1px solid var(--border-color)',
                     paddingTop: 8,
                   }}
                 >
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#ffffff' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>
                     Remaining to Pay:
                   </span>
                   <strong
                     style={{
-                      fontSize: 15,
-                      color: Number(successReceipt.remainingAmount) <= 0 ? '#00d293' : '#f43f5e',
+                      fontSize: 14,
+                      color: Number(successReceipt.remainingAmount) <= 0 ? 'var(--primary)' : '#f43f5e',
                     }}
                   >
                     {Number(successReceipt.remainingAmount) <= 0
@@ -705,21 +854,21 @@ export default function Payments() {
                     background: '#25D366',
                     color: 'white',
                     justifyContent: 'center',
-                    padding: 14,
-                    fontSize: 15,
+                    padding: 13,
+                    fontSize: 14,
                     fontWeight: 700,
                   }}
                   onClick={() => sendWhatsApp(successReceipt)}
                 >
-                  <MessageCircle size={20} /> Send Receipt Details via WhatsApp
+                  <MessageCircle size={18} /> Send Receipt via WhatsApp
                 </button>
 
                 <button
                   className="btn btn-outline"
-                  style={{ justifyContent: 'center', padding: 12 }}
+                  style={{ justifyContent: 'center', padding: 11 }}
                   onClick={() => generateReceiptPDF(successReceipt)}
                 >
-                  <Download size={16} /> Re-download PDF Receipt
+                  <Download size={15} /> Re-download PDF Receipt
                 </button>
 
                 <button
@@ -727,9 +876,9 @@ export default function Payments() {
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: '#64748b',
+                    color: 'var(--text-muted)',
                     justifyContent: 'center',
-                    marginTop: 6,
+                    marginTop: 4,
                   }}
                   onClick={() => setShowSuccessModal(false)}
                 >

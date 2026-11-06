@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
-import { FolderOpen, Plus, Pencil, Trash2, X, CheckCircle } from 'lucide-react'
+import { FolderOpen, Plus, Pencil, Trash2, X, CheckCircle, TrendingUp, Clock, Compass } from 'lucide-react'
 
 const emptyProject = {
   client_id: '',
@@ -45,7 +45,20 @@ export default function Projects() {
   const [saving, setSaving] = useState(false)
   const [alert, setAlert] = useState(null)
 
-  useEffect(() => { fetchData() }, [])
+  useEffect(() => {
+    fetchData()
+
+    // Realtime subscription
+    const channel = supabase
+      .channel('realtime-projects-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => fetchData())
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   const fetchData = async () => {
     setLoading(true)
@@ -166,6 +179,7 @@ export default function Projects() {
         </div>
       )}
 
+      {/* FILTER BAR */}
       <div className="filter-bar">
         <input
           className="search-input"
@@ -174,7 +188,8 @@ export default function Projects() {
           onChange={e => setSearch(e.target.value)}
         />
         <select
-          style={{ padding: '10px 16px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 10, color: '#ffffff', outline: 'none' }}
+          className="search-input"
+          style={{ flex: 'none', width: 'auto', minWidth: 140 }}
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value)}
         >
@@ -187,13 +202,15 @@ export default function Projects() {
         </button>
       </div>
 
-      {loading ? (
-        <div className="loading"><div className="spinner" /> Loading...</div>
+      {loading && summary.length === 0 ? (
+        <div className="loading"><div className="spinner" /> Loading projects...</div>
       ) : (
         <div className="card">
           <div className="card-header">
-            <h2>All Projects ({filtered.length})</h2>
+            <h2>Architectural Design Projects ({filtered.length})</h2>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Realtime synced</span>
           </div>
+
           {filtered.length === 0 ? (
             <div className="empty-state">
               <FolderOpen size={48} />
@@ -201,64 +218,118 @@ export default function Projects() {
               <p>Create your first project to get started.</p>
             </div>
           ) : (
-            <div className="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Project</th>
-                    <th>Client</th>
-                    <th>Status</th>
-                    <th>Total</th>
-                    <th>Paid</th>
-                    <th>Remaining</th>
-                    <th>Progress</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map(p => {
-                    const pct = p.total_amount > 0
-                      ? Math.min(100, (p.paid_amount / p.total_amount) * 100)
-                      : 0
-                    return (
-                      <tr key={p.project_id}>
-                        <td>
-                          <div style={{ fontWeight: 700 }}>{p.project_name}</div>
-                          <div style={{ fontSize: 12, color: '#94a3b8' }}>{p.project_type}</div>
-                        </td>
-                        <td style={{ color: '#1e293b' }}>{p.client_name}</td>
-                        <td><span className={statusBadge(p.status)}>{p.status}</span></td>
-                        <td style={{ fontWeight: 600 }}>{fmt(p.total_amount)}</td>
-                        <td style={{ color: '#16a34a', fontWeight: 600 }}>{fmt(p.paid_amount)}</td>
-                        <td style={{ color: p.remaining_amount > 0 ? '#dc2626' : '#16a34a', fontWeight: 600 }}>
-                          {fmt(p.remaining_amount)}
-                        </td>
-                        <td style={{ minWidth: 100 }}>
-                          <div style={{ fontSize: 11, color: '#64748b', marginBottom: 2 }}>{pct.toFixed(0)}%</div>
-                          <div className="progress-bar">
-                            <div className="progress-fill" style={{ width: `${pct}%` }} />
-                          </div>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                            <button className="btn btn-outline btn-sm" onClick={() => openEdit(p)}>
-                              <Pencil size={13} />
-                            </button>
-                            <button className="btn btn-danger btn-sm" onClick={() => handleDelete(p.project_id)}>
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <>
+              {/* Desktop Table */}
+              <div className="table-wrapper table-desktop-only">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Project Name</th>
+                      <th>Client</th>
+                      <th>Status</th>
+                      <th>Total Amount</th>
+                      <th>Paid to Date</th>
+                      <th>Remaining</th>
+                      <th>Progress</th>
+                      <th style={{ textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map(p => {
+                      const pct = p.total_amount > 0
+                        ? Math.min(100, (p.paid_amount / p.total_amount) * 100)
+                        : 0
+                      const isPaid = Number(p.remaining_amount) <= 0
+
+                      return (
+                        <tr key={p.project_id}>
+                          <td>
+                            <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{p.project_name}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.project_type}</div>
+                          </td>
+                          <td>
+                            <div style={{ fontWeight: 600 }}>{p.client_name}</div>
+                            {p.client_phone && <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.client_phone}</div>}
+                          </td>
+                          <td><span className={statusBadge(p.status)}>{p.status}</span></td>
+                          <td style={{ fontWeight: 600 }}>{fmt(p.total_amount)}</td>
+                          <td style={{ color: 'var(--primary)', fontWeight: 700 }}>{fmt(p.paid_amount)}</td>
+                          <td style={{ color: isPaid ? 'var(--primary)' : '#f43f5e', fontWeight: 800 }}>
+                            {isPaid ? '✓ Fully Paid' : fmt(p.remaining_amount)}
+                          </td>
+                          <td style={{ minWidth: 100 }}>
+                            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>{pct.toFixed(0)}%</div>
+                            <div className="progress-bar">
+                              <div className="progress-fill" style={{ width: `${pct}%` }} />
+                            </div>
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                              <button className="btn btn-outline btn-sm" onClick={() => openEdit(p)}>
+                                <Pencil size={13} />
+                              </button>
+                              <button className="btn btn-danger btn-sm" onClick={() => handleDelete(p.project_id)}>
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="mobile-cards-list" style={{ padding: 16 }}>
+                {filtered.map(p => {
+                  const pct = p.total_amount > 0 ? Math.min(100, (p.paid_amount / p.total_amount) * 100) : 0
+                  const isPaid = Number(p.remaining_amount) <= 0
+
+                  return (
+                    <div key={p.project_id} className="mobile-data-card">
+                      <div className="mobile-data-card-header">
+                        <div>
+                          <strong style={{ fontSize: 14 }}>{p.project_name}</strong>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.client_name} • {p.project_type}</div>
+                        </div>
+                        <span className={statusBadge(p.status)}>{p.status}</span>
+                      </div>
+                      <div className="mobile-data-card-row">
+                        <span>Contract Value:</span>
+                        <strong>{fmt(p.total_amount)}</strong>
+                      </div>
+                      <div className="mobile-data-card-row">
+                        <span>Paid:</span>
+                        <strong style={{ color: 'var(--primary)' }}>{fmt(p.paid_amount)}</strong>
+                      </div>
+                      <div className="mobile-data-card-row">
+                        <span>Remaining:</span>
+                        <strong style={{ color: isPaid ? 'var(--primary)' : '#f43f5e' }}>
+                          {isPaid ? '✓ Fully Paid' : fmt(p.remaining_amount)}
+                        </strong>
+                      </div>
+                      <div className="progress-bar">
+                        <div className="progress-fill" style={{ width: `${pct}%` }} />
+                      </div>
+                      <div className="mobile-data-card-actions">
+                        <button className="btn btn-outline btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={() => openEdit(p)}>
+                          <Pencil size={13} /> Edit
+                        </button>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(p.project_id)}>
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
           )}
         </div>
       )}
 
+      {/* ADD/EDIT MODAL */}
       {modal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && closeModal()}>
           <div className="modal">
@@ -284,14 +355,14 @@ export default function Projects() {
                   </div>
                   <div className="form-group full-width">
                     <label>Project Name *</label>
-                    <input required value={form.project_name} onChange={e => setForm({ ...form, project_name: e.target.value })} placeholder="e.g. Modern 2-Story Residence" />
+                    <input required value={form.project_name} onChange={e => setForm({ ...form, project_name: e.target.value })} placeholder="e.g. Modern 2-Story Luxury Residence" />
                   </div>
                   <div className="form-group full-width">
                     <label>Description</label>
-                    <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Project details..." />
+                    <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Project specifications, rooms, design style..." />
                   </div>
                   <div className="form-group">
-                    <label>Total Project Amount (Rs.) *</label>
+                    <label>Total Project Contract (Rs.) *</label>
                     <input type="number" required min="0" step="0.01" value={form.total_amount} onChange={e => setForm({ ...form, total_amount: e.target.value })} placeholder="850000.00" />
                   </div>
                   <div className="form-group">

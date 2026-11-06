@@ -8,6 +8,7 @@ import {
   Compass,
   ArrowRight,
   FileSpreadsheet,
+  X,
 } from 'lucide-react'
 
 const navItems = [
@@ -17,9 +18,16 @@ const navItems = [
   { id: 'payments', label: 'Payments', icon: CreditCard },
 ]
 
-export default function Sidebar({ activePage, onNavigate, user, onLogout }) {
+export default function Sidebar({
+  activePage,
+  onNavigate,
+  user,
+  onLogout,
+  isOpen = false,
+  onClose,
+}) {
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
         <div className="brand">
           <div className="brand-icon">
@@ -30,6 +38,18 @@ export default function Sidebar({ activePage, onNavigate, user, onLogout }) {
             <span>DESIGN &amp; PLANNING</span>
           </div>
         </div>
+
+        {/* Close Button on Mobile */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="menu-toggle-btn"
+            style={{ display: isOpen ? 'flex' : 'none' }}
+            title="Close menu"
+          >
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       <nav className="sidebar-nav">
@@ -50,14 +70,11 @@ export default function Sidebar({ activePage, onNavigate, user, onLogout }) {
         ))}
       </nav>
 
-      {/* Floating Emerald Summary Card matching reference bottom-left */}
+      {/* Floating Emerald Summary Card */}
       <div className="sidebar-promo">
         <h4>Summary Report</h4>
         <p>Export all project cashflow &amp; balance statements</p>
-        <button
-          className="promo-btn"
-          onClick={() => onNavigate('payments')}
-        >
+        <button className="promo-btn" onClick={() => onNavigate('payments')}>
           <FileSpreadsheet size={13} />
           <span>View Reports</span>
           <ArrowRight size={12} />
