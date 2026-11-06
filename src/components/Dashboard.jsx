@@ -6,7 +6,6 @@ import {
   CreditCard,
   TrendingUp,
   AlertCircle,
-  CheckCircle,
 } from 'lucide-react'
 
 function fmt(n) {
@@ -25,44 +24,49 @@ export default function Dashboard({ onNavigate }) {
   const fetchData = async () => {
     setLoading(true)
     try {
-      // Fetch counts
-      const [clientsRes, projectsRes, paymentsRes, summaryRes] = await Promise.all([
-        supabase.from('clients').select('id', { count: 'exact', head: true }),
-        supabase.from('projects').select('id, status, total_amount', { count: 'exact' }),
-        supabase.from('payments').select('amount'),
-        supabase.from('project_payment_summary').select('*'),
+      const [clientsRes, projectsRes, paymentsRes] = await Promise.all([
+        supabase.from('clients').select('id', { count: 'exact' }),
+        supabase.from('projects').select('id, project_name, status, total_amount'),
+        supabase.from('payments').select('id, amount, payment_date, payment_method, reference_number, project_id, client_id, created_at'),
       ])
 
-      const totalRevenue = (paymentsRes.data || []).reduce((s, p) => s + Number(p.amount), 0)
-      const totalOutstanding = (summaryRes.data || []).reduce(
-        (s, p) => s + Number(p.remaining_amount || 0),
-        0
-      )
-      const activeProjects = (projectsRes.data || []).filter(
-        (p) => p.status === 'Active'
-      ).length
+      const clientsList = clientsRes.data || []
+      const projectsList = projectsRes.data || []
+      const paymentsList = paymentsRes.data || []
+
+      const totalRevenue = paymentsList.reduce((s, p) => s + Number(p.amount || 0), 0)
+      const totalProjectBudget = projectsList.reduce((s, p) => s + Number(p.total_amount || 0), 0)
+      const totalOutstanding = Math.max(0, totalProjectBudget - totalRevenue)
+      const activeProjects = projectsList.filter((p) => p.status === 'Active').length
 
       setStats({
-        clients: clientsRes.count || 0,
-        totalProjects: projectsRes.count || 0,
+        clients: clientsRes.count ?? clientsList.length,
+        totalProjects: projectsList.length,
         activeProjects,
         totalRevenue,
         totalOutstanding,
-        paymentsCount: (paymentsRes.data || []).length,
+        paymentsCount: paymentsList.length,
       })
 
-      // Recent payments
-      const { data: recent } = await supabase
-        .from('payments')
-        .select(`
-          id, amount, payment_date, payment_method, reference_number,
-          projects ( project_name ),
-          clients ( name )
-        `)
-        .order('created_at', { ascending: false })
-        .limit(6)
+      // Map recent payments with client and project name safely
+      const clientMap = new Map()
+      const projectMap = new Map()
 
-      setRecentPayments(recent || [])
+      // Fetch names if needed
+      const { data: allClients } = await supabase.from('clients').select('id, name')
+      ;(allClients || []).forEach(c => clientMap.set(c.id, c.name))
+      projectsList.forEach(p => projectMap.set(p.id, p.project_name))
+
+      const sortedPayments = [...paymentsList]
+        .sort((a, b) => new Date(b.created_at || b.payment_date) - new Date(a.created_at || a.payment_date))
+        .slice(0, 6)
+        .map(p => ({
+          ...p,
+          clientName: clientMap.get(p.client_id) || 'Client',
+          projectName: projectMap.get(p.project_id) || 'House Design',
+        }))
+
+      setRecentPayments(sortedPayments)
     } catch (err) {
       console.error('Dashboard fetch error:', err)
     }
@@ -146,8 +150,8 @@ export default function Dashboard({ onNavigate }) {
                 <tbody>
                   {recentPayments.map((p) => (
                     <tr key={p.id}>
-                      <td><strong>{p.clients?.name}</strong></td>
-                      <td style={{ color: '#64748b' }}>{p.projects?.project_name}</td>
+                      <td><strong>{p.clientName}</strong></td>
+                      <td style={{ color: '#64748b' }}>{p.projectName}</td>
                       <td><strong style={{ color: '#16a34a' }}>{fmt(p.amount)}</strong></td>
                       <td>{p.payment_method}</td>
                       <td>{new Date(p.payment_date).toLocaleDateString('en-GB')}</td>
@@ -162,4 +166,3 @@ export default function Dashboard({ onNavigate }) {
     </div>
   )
 }
-

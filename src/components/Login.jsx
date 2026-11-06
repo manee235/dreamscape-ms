@@ -80,7 +80,7 @@ export default function Login({ onLogin }) {
             <label>Username</label>
             <input
               type="text"
-              placeholder="Enter username (isanka)"
+              placeholder="Enter your username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoFocus
@@ -91,7 +91,7 @@ export default function Login({ onLogin }) {
             <label>Password</label>
             <input
               type="password"
-              placeholder="Enter password (tharindu)"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

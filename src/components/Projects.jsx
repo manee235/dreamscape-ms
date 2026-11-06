@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
-import { FolderOpen, Plus, Pencil, Trash2, X, CheckCircle, CreditCard } from 'lucide-react'
+import { FolderOpen, Plus, Pencil, Trash2, X, CheckCircle } from 'lucide-react'
 
 const emptyProject = {
   client_id: '',
@@ -33,7 +33,7 @@ function fmt(n) {
   return 'Rs. ' + Number(n || 0).toLocaleString('en-LK', { minimumFractionDigits: 2 })
 }
 
-export default function Projects({ onNavigate }) {
+export default function Projects() {
   const [summary, setSummary] = useState([])
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
@@ -49,12 +49,55 @@ export default function Projects({ onNavigate }) {
 
   const fetchData = async () => {
     setLoading(true)
-    const [summaryRes, clientsRes] = await Promise.all([
-      supabase.from('project_payment_summary').select('*').order('created_at', { ascending: false }),
-      supabase.from('clients').select('id, name').order('name'),
-    ])
-    setSummary(summaryRes.data || [])
-    setClients(clientsRes.data || [])
+    try {
+      const [projectsRes, clientsRes, paymentsRes] = await Promise.all([
+        supabase.from('projects').select('*').order('created_at', { ascending: false }),
+        supabase.from('clients').select('id, name, email, phone').order('name'),
+        supabase.from('payments').select('project_id, amount'),
+      ])
+
+      const rawProjects = projectsRes.data || []
+      const rawClients = clientsRes.data || []
+      const rawPayments = paymentsRes.data || []
+
+      const clientMap = new Map()
+      rawClients.forEach(c => clientMap.set(c.id, c))
+
+      // Sum payments by project_id
+      const paymentTotals = new Map()
+      rawPayments.forEach(pm => {
+        const prev = paymentTotals.get(pm.project_id) || 0
+        paymentTotals.set(pm.project_id, prev + Number(pm.amount || 0))
+      })
+
+      const combined = rawProjects.map(p => {
+        const client = clientMap.get(p.client_id)
+        const total = Number(p.total_amount || 0)
+        const paid = paymentTotals.get(p.id) || 0
+        const remaining = Math.max(0, total - paid)
+        return {
+          project_id: p.id,
+          project_name: p.project_name,
+          project_type: p.project_type,
+          description: p.description,
+          status: p.status,
+          total_amount: total,
+          paid_amount: paid,
+          remaining_amount: remaining,
+          client_id: p.client_id,
+          client_name: client?.name || 'Unknown Client',
+          client_phone: client?.phone,
+          start_date: p.start_date,
+          end_date: p.end_date,
+          created_at: p.created_at,
+        }
+      })
+
+      setSummary(combined)
+      setClients(rawClients)
+    } catch (err) {
+      console.error('Projects fetch error:', err)
+    }
     setLoading(false)
   }
 
@@ -64,7 +107,7 @@ export default function Projects({ onNavigate }) {
       client_id: p.client_id,
       project_name: p.project_name,
       project_type: p.project_type,
-      description: '',
+      description: p.description || '',
       status: p.status,
       total_amount: p.total_amount,
       start_date: p.start_date || '',
@@ -280,4 +323,3 @@ export default function Projects({ onNavigate }) {
     </div>
   )
 }
-
