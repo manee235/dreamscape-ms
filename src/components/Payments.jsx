@@ -298,7 +298,7 @@ export default function Payments() {
           </div>
           <div className="obsidian-card-footer">
             <span className="trend-pill positive">
-              <ArrowUpRight size={13} /> +18.4% received to date
+              <ArrowUpRight size={13} /> {totalCollected > 0 ? '+18.4% received to date' : '0.0% received to date'}
             </span>
             <span className="card-mini-link">Settled ↗</span>
           </div>
@@ -317,7 +317,7 @@ export default function Payments() {
           </div>
           <div className="obsidian-card-footer">
             <span className="trend-pill negative" style={{ color: totalOutstanding > 0 ? '#f43f5e' : 'var(--primary)' }}>
-              {totalOutstanding > 0 ? 'Due across active plans' : '✓ All accounts settled'}
+              {totalOutstanding > 0 ? 'Due across active plans' : '✓ No outstanding balance'}
             </span>
             <span className="card-mini-link">Pending ↗</span>
           </div>
@@ -371,58 +371,72 @@ export default function Payments() {
               </tr>
             </thead>
             <tbody>
-              {projects.map((p) => {
-                const pct =
-                  p.total_amount > 0 ? Math.min(100, (p.paid_amount / p.total_amount) * 100) : 0
-                const isPaid = Number(p.remaining_amount) <= 0
+              {projects.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
+                    No project balances recorded yet. Add clients and projects to track payments.
+                  </td>
+                </tr>
+              ) : (
+                projects.map((p) => {
+                  const pct =
+                    p.total_amount > 0 ? Math.min(100, (p.paid_amount / p.total_amount) * 100) : 0
+                  const isPaid = Number(p.remaining_amount) <= 0
 
-                return (
-                  <tr key={p.project_id}>
-                    <td>
-                      <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{p.project_name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.project_type}</div>
-                    </td>
-                    <td>
-                      <div style={{ fontWeight: 600 }}>{p.client_name}</div>
-                      {p.client_phone && (
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.client_phone}</div>
-                      )}
-                    </td>
-                    <td style={{ fontWeight: 600 }}>{formatLKR(p.total_amount)}</td>
-                    <td style={{ color: 'var(--primary)', fontWeight: 700 }}>{formatLKR(p.paid_amount)}</td>
-                    <td>
-                      <span
-                        style={{
-                          fontWeight: 800,
-                          color: isPaid ? 'var(--primary)' : '#f43f5e',
-                          fontSize: 14,
-                        }}
-                      >
-                        {isPaid ? '✓ Fully Paid' : formatLKR(p.remaining_amount)}
-                      </span>
-                    </td>
-                    <td style={{ minWidth: 120 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>
-                        <span>{pct.toFixed(0)}%</span>
-                        <span>{isPaid ? 'Completed' : 'Active'}</span>
-                      </div>
-                      <div className="progress-bar">
-                        <div className="progress-fill" style={{ width: `${pct}%` }} />
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
+                  return (
+                    <tr key={p.project_id}>
+                      <td>
+                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{p.project_name}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.project_type}</div>
+                      </td>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{p.client_name}</div>
+                        {p.client_phone && (
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.client_phone}</div>
+                        )}
+                      </td>
+                      <td style={{ fontWeight: 600 }}>{formatLKR(p.total_amount)}</td>
+                      <td style={{ color: 'var(--primary)', fontWeight: 700 }}>{formatLKR(p.paid_amount)}</td>
+                      <td>
+                        <span
+                          style={{
+                            fontWeight: 800,
+                            color: isPaid ? 'var(--primary)' : '#f43f5e',
+                            fontSize: 14,
+                          }}
+                        >
+                          {isPaid ? '✓ Fully Paid' : formatLKR(p.remaining_amount)}
+                        </span>
+                      </td>
+                      <td style={{ minWidth: 120 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>
+                          <span>{pct.toFixed(0)}%</span>
+                          <span>{isPaid ? 'Completed' : 'Active'}</span>
+                        </div>
+                        <div className="progress-bar">
+                          <div className="progress-fill" style={{ width: `${pct}%` }} />
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Mobile Native Card View (for screens <= 768px) */}
         <div className="mobile-cards-list" style={{ padding: 16 }}>
-          {projects.map((p) => {
-            const pct = p.total_amount > 0 ? Math.min(100, (p.paid_amount / p.total_amount) * 100) : 0
-            const isPaid = Number(p.remaining_amount) <= 0
-            return (
+          {projects.length === 0 ? (
+            <div className="empty-state" style={{ padding: 24, textAlign: 'center' }}>
+              <Clock size={36} style={{ color: 'var(--text-muted)', marginBottom: 8 }} />
+              <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No project balance records yet.</p>
+            </div>
+          ) : (
+            projects.map((p) => {
+              const pct = p.total_amount > 0 ? Math.min(100, (p.paid_amount / p.total_amount) * 100) : 0
+              const isPaid = Number(p.remaining_amount) <= 0
+              return (
               <div key={p.project_id} className="mobile-data-card">
                 <div className="mobile-data-card-header">
                   <div>
@@ -452,7 +466,7 @@ export default function Payments() {
                 </div>
               </div>
             )
-          })}
+          }))}
         </div>
       </div>
 
@@ -493,85 +507,99 @@ export default function Payments() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => {
-                const rowReceiptData = {
-                  receiptNo: 'RCP-' + (p.id ? p.id.substring(0, 8).toUpperCase() : '001'),
-                  clientName: p.client_name,
-                  clientPhone: p.client_phone,
-                  clientEmail: p.client_email,
-                  projectName: p.project_name,
-                  projectType: p.project_type,
-                  amountPaid: Number(p.amount),
-                  totalAmount: p.project_total,
-                  totalPaid: p.project_paid_total,
-                  remainingAmount: p.project_remaining,
-                  paymentDate: p.payment_date,
-                  paymentMethod: p.payment_method,
-                  referenceNumber: p.reference_number,
-                  notes: p.notes,
-                }
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
+                    No payment transactions recorded yet. Click "+ Mark Payment" to log your first payment.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((p) => {
+                  const rowReceiptData = {
+                    receiptNo: 'RCP-' + (p.id ? p.id.substring(0, 8).toUpperCase() : '001'),
+                    clientName: p.client_name,
+                    clientPhone: p.client_phone,
+                    clientEmail: p.client_email,
+                    projectName: p.project_name,
+                    projectType: p.project_type,
+                    amountPaid: Number(p.amount),
+                    totalAmount: p.project_total,
+                    totalPaid: p.project_paid_total,
+                    remainingAmount: p.project_remaining,
+                    paymentDate: p.payment_date,
+                    paymentMethod: p.payment_method,
+                    referenceNumber: p.reference_number,
+                    notes: p.notes,
+                  }
 
-                return (
-                  <tr key={p.id}>
-                    <td>
-                      <strong>{p.client_name}</strong>
-                      {p.client_phone && (
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.client_phone}</div>
-                      )}
-                    </td>
-                    <td style={{ color: 'var(--text-secondary)' }}>{p.project_name}</td>
-                    <td>
-                      <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: 14 }}>
-                        {formatLKR(p.amount)}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="badge badge-active" style={{ fontSize: 11 }}>
-                        {p.payment_method}
-                      </span>
-                    </td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>{p.reference_number || '—'}</td>
-                    <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>
-                      {new Date(p.payment_date).toLocaleDateString('en-GB')}
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 6 }}>
+                  return (
+                    <tr key={p.id}>
+                      <td>
+                        <strong>{p.client_name}</strong>
+                        {p.client_phone && (
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.client_phone}</div>
+                        )}
+                      </td>
+                      <td style={{ color: 'var(--text-secondary)' }}>{p.project_name}</td>
+                      <td>
+                        <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: 14 }}>
+                          {formatLKR(p.amount)}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="badge badge-active" style={{ fontSize: 11 }}>
+                          {p.payment_method}
+                        </span>
+                      </td>
+                      <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>{p.reference_number || '—'}</td>
+                      <td style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                        {new Date(p.payment_date).toLocaleDateString('en-GB')}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button
+                            className="btn btn-outline btn-sm"
+                            title="Download PDF"
+                            onClick={() => generateReceiptPDF(rowReceiptData)}
+                          >
+                            <FileText size={13} /> PDF
+                          </button>
+                          <button
+                            className="btn btn-sm"
+                            style={{ background: '#25D366', color: '#ffffff', border: 'none' }}
+                            title="Send to client WhatsApp"
+                            onClick={() => sendWhatsApp(rowReceiptData)}
+                          >
+                            <MessageCircle size={13} /> WhatsApp
+                          </button>
+                        </div>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
                         <button
-                          className="btn btn-outline btn-sm"
-                          title="Download PDF"
-                          onClick={() => generateReceiptPDF(rowReceiptData)}
+                          className="btn btn-danger btn-sm"
+                          title="Delete"
+                          onClick={() => handleDelete(p.id)}
                         >
-                          <FileText size={13} /> PDF
+                          <Trash2 size={13} />
                         </button>
-                        <button
-                          className="btn btn-sm"
-                          style={{ background: '#25D366', color: '#ffffff', border: 'none' }}
-                          title="Send to client WhatsApp"
-                          onClick={() => sendWhatsApp(rowReceiptData)}
-                        >
-                          <MessageCircle size={13} /> WhatsApp
-                        </button>
-                      </div>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <button
-                        className="btn btn-danger btn-sm"
-                        title="Delete"
-                        onClick={() => handleDelete(p.id)}
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Mobile View for Payment History */}
         <div className="mobile-cards-list" style={{ padding: 16 }}>
-          {filtered.map((p) => {
+          {filtered.length === 0 ? (
+            <div className="empty-state" style={{ padding: 24, textAlign: 'center' }}>
+              <CreditCard size={36} style={{ color: 'var(--text-muted)', marginBottom: 8 }} />
+              <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>No payment transactions recorded yet.</p>
+            </div>
+          ) : (
+            filtered.map((p) => {
             const rowReceiptData = {
               receiptNo: 'RCP-' + (p.id ? p.id.substring(0, 8).toUpperCase() : '001'),
               clientName: p.client_name,
@@ -630,7 +658,7 @@ export default function Payments() {
                 </div>
               </div>
             )
-          })}
+          }))}
         </div>
       </div>
 

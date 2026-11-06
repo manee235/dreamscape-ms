@@ -23,70 +23,115 @@ function fmt(n) {
   return 'Rs. ' + Number(n || 0).toLocaleString('en-LK', { minimumFractionDigits: 2 })
 }
 
-// Dynamic chart datasets for Week, Month, Year
-const CHART_DATA = {
-  Week: {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    collected: [120000, 180000, 240000, 350000, 290000, 420000, 380000],
-    projected: [150000, 200000, 310000, 500000, 440000, 480000, 520000],
-    // SVG points for 700x230 viewBox
-    curvePoints: [
-      { x: 50, y: 170 },
-      { x: 150, y: 150 },
-      { x: 250, y: 125 },
-      { x: 370, y: 95 },
-      { x: 470, y: 110 },
-      { x: 580, y: 70 },
-      { x: 670, y: 85 },
-    ],
-    forecastPoints: [
-      { x: 50, y: 160 },
-      { x: 150, y: 135 },
-      { x: 250, y: 105 },
-      { x: 370, y: 65 },
-      { x: 470, y: 80 },
-      { x: 580, y: 55 },
-      { x: 670, y: 45 },
-    ],
-    path: 'M 0 180 Q 75 170, 150 150 T 300 120 T 450 100 T 580 70 L 700 85',
-    fillPath: 'M 0 180 Q 75 170, 150 150 T 300 120 T 450 100 T 580 70 L 700 85 L 700 230 L 0 230 Z',
-    forecastPath: 'M 0 170 Q 75 150, 150 135 T 300 95 T 450 75 T 580 55 L 700 45',
-    defaultIndex: 3, // Thursday (matching screenshot)
-  },
-  Month: {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    collected: [500000, 750000, 1100000, 850000, 920000, 1250000, 1400000, 1150000, 1300000, 1650000, 1400000, 1800000],
-    projected: [600000, 850000, 1200000, 1000000, 1100000, 1400000, 1600000, 1300000, 1500000, 1900000, 1700000, 2100000],
-    curvePoints: [
-      { x: 30, y: 175 }, { x: 88, y: 160 }, { x: 146, y: 130 }, { x: 204, y: 145 },
-      { x: 262, y: 138 }, { x: 320, y: 115 }, { x: 378, y: 100 }, { x: 436, y: 120 },
-      { x: 494, y: 108 }, { x: 552, y: 80 }, { x: 610, y: 95 }, { x: 670, y: 65 }
-    ],
-    forecastPoints: [
-      { x: 30, y: 165 }, { x: 88, y: 145 }, { x: 146, y: 118 }, { x: 204, y: 130 },
-      { x: 262, y: 120 }, { x: 320, y: 95 }, { x: 378, y: 80 }, { x: 436, y: 100 },
-      { x: 494, y: 88 }, { x: 552, y: 60 }, { x: 610, y: 75 }, { x: 670, y: 45 }
-    ],
-    path: 'M 0 180 Q 100 160, 200 140 T 400 110 T 600 80 L 700 65',
-    fillPath: 'M 0 180 Q 100 160, 200 140 T 400 110 T 600 80 L 700 65 L 700 230 L 0 230 Z',
-    forecastPath: 'M 0 170 Q 100 140, 200 120 T 400 90 T 600 60 L 700 45',
-    defaultIndex: 9, // October peak
-  },
-  Year: {
-    labels: ['2023', '2024', '2025', '2026 H1', '2026 Target'],
-    collected: [2100000, 4800000, 7200000, 3550000, 8500000],
-    projected: [2500000, 5200000, 8000000, 4500000, 10000000],
-    curvePoints: [
-      { x: 70, y: 180 }, { x: 210, y: 145 }, { x: 350, y: 105 }, { x: 490, y: 125 }, { x: 630, y: 60 }
-    ],
-    forecastPoints: [
-      { x: 70, y: 165 }, { x: 210, y: 130 }, { x: 350, y: 90 }, { x: 490, y: 105 }, { x: 630, y: 40 }
-    ],
-    path: 'M 0 190 Q 150 160, 300 120 T 550 80 L 700 60',
-    fillPath: 'M 0 190 Q 150 160, 300 120 T 550 80 L 700 60 L 700 230 L 0 230 Z',
-    forecastPath: 'M 0 175 Q 150 145, 300 100 T 550 60 L 700 40',
-    defaultIndex: 3, // Current 2026 H1
-  },
+// Dynamically compute chart datasets and SVG wave curves from real database payments & projects
+function buildChartData(paymentsList = [], projectsList = []) {
+  const weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  const weekDaysIndex = { 'Mon': 0, 'Tue': 1, 'Wed': 2, 'Thu': 3, 'Fri': 4, 'Sat': 5, 'Sun': 6 }
+  const weekCollected = [0, 0, 0, 0, 0, 0, 0]
+
+  const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const monthCollected = new Array(12).fill(0)
+
+  const currentYear = new Date().getFullYear()
+  const yearLabels = [String(currentYear - 2), String(currentYear - 1), String(currentYear), String(currentYear + 1)]
+  const yearCollected = [0, 0, 0, 0]
+
+  paymentsList.forEach((pm) => {
+    if (!pm.payment_date) return
+    const d = new Date(pm.payment_date)
+    const amt = Number(pm.amount || 0)
+
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'short' })
+    if (weekDaysIndex[dayName] !== undefined) {
+      weekCollected[weekDaysIndex[dayName]] += amt
+    }
+
+    const m = d.getMonth()
+    if (m >= 0 && m < 12) {
+      monthCollected[m] += amt
+    }
+
+    const yIdx = yearLabels.indexOf(String(d.getFullYear()))
+    if (yIdx !== -1) {
+      yearCollected[yIdx] += amt
+    }
+  })
+
+  const totalBudget = projectsList.reduce((s, p) => s + Number(p.total_amount || 0), 0)
+  const avgMonthlyTarget = totalBudget > 0 ? Math.round(totalBudget / 12) : 0
+  const avgDailyTarget = avgMonthlyTarget > 0 ? Math.round(avgMonthlyTarget / 4) : 0
+
+  const weekProjected = weekLabels.map(() => avgDailyTarget)
+  const monthProjected = monthLabels.map(() => avgMonthlyTarget)
+  const yearProjected = yearLabels.map((_, i) => (i === 2 ? totalBudget : Math.round(totalBudget * 0.8)))
+
+  const generateSvg = (collectedArr, projectedArr, width = 700, height = 230) => {
+    const maxVal = Math.max(1, ...collectedArr, ...projectedArr)
+    const count = collectedArr.length
+    const paddingX = 40
+    const usableW = width - paddingX * 2
+    const usableH = height - 70
+    const baselineY = 190
+
+    const curvePoints = collectedArr.map((val, idx) => {
+      const x = Math.round(paddingX + (idx / (count - 1 || 1)) * usableW)
+      const ratio = val > 0 ? val / maxVal : 0
+      const y = Math.round(baselineY - ratio * usableH)
+      return { x, y }
+    })
+
+    const forecastPoints = projectedArr.map((val, idx) => {
+      const x = Math.round(paddingX + (idx / (count - 1 || 1)) * usableW)
+      const ratio = val > 0 ? val / maxVal : 0
+      const y = Math.round(baselineY - ratio * usableH)
+      return { x, y }
+    })
+
+    const buildPath = (pts) => {
+      if (pts.length === 0) return ''
+      let p = `M ${pts[0].x} ${pts[0].y}`
+      for (let i = 0; i < pts.length - 1; i++) {
+        const xc = Math.round((pts[i].x + pts[i + 1].x) / 2)
+        const yc = Math.round((pts[i].y + pts[i + 1].y) / 2)
+        p += ` Q ${pts[i].x} ${pts[i].y}, ${xc} ${yc}`
+      }
+      p += ` L ${pts[pts.length - 1].x} ${pts[pts.length - 1].y}`
+      return p
+    }
+
+    const path = buildPath(curvePoints)
+    const fillPath = `${path} L ${curvePoints[curvePoints.length - 1].x} ${baselineY + 30} L ${curvePoints[0].x} ${baselineY + 30} Z`
+    const forecastPath = buildPath(forecastPoints)
+
+    return { curvePoints, forecastPoints, path, fillPath, forecastPath }
+  }
+
+  const todayDay = new Date().getDay()
+  const todayWeekIdx = todayDay === 0 ? 6 : todayDay - 1
+
+  return {
+    Week: {
+      labels: weekLabels,
+      collected: weekCollected,
+      projected: weekProjected,
+      ...generateSvg(weekCollected, weekProjected),
+      defaultIndex: todayWeekIdx,
+    },
+    Month: {
+      labels: monthLabels,
+      collected: monthCollected,
+      projected: monthProjected,
+      ...generateSvg(monthCollected, monthProjected),
+      defaultIndex: new Date().getMonth(),
+    },
+    Year: {
+      labels: yearLabels,
+      collected: yearCollected,
+      projected: yearProjected,
+      ...generateSvg(yearCollected, yearProjected),
+      defaultIndex: 2,
+    },
+  }
 }
 
 export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
@@ -98,7 +143,8 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
   // Interactive dynamic chart state
   const [timeframe, setTimeframe] = useState('Week')
   const [showForecast, setShowForecast] = useState(true)
-  const [activePointIndex, setActivePointIndex] = useState(3) // Default to Thursday (matching screenshot)
+  const [activePointIndex, setActivePointIndex] = useState(0)
+  const [chartData, setChartData] = useState(() => buildChartData([], []))
 
   const chartSvgRef = useRef(null)
 
@@ -168,6 +214,12 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
       })
       setRecentPayments(recent)
       setActiveProjectsList(projectsList.slice(0, 4))
+
+      const generated = buildChartData(paymentsList, projectsList)
+      setChartData(generated)
+      if (generated[timeframe]) {
+        setActivePointIndex(generated[timeframe].defaultIndex)
+      }
     } catch (err) {
       console.error('Dashboard load error:', err)
     }
@@ -181,18 +233,18 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
     const relativeX = clientX - rect.left
     const percent = Math.max(0, Math.min(1, relativeX / rect.width))
 
-    const activeSet = CHART_DATA[timeframe]
+    const activeSet = chartData[timeframe] || chartData.Week
     const count = activeSet.labels.length
     const index = Math.min(count - 1, Math.max(0, Math.round(percent * (count - 1))))
     setActivePointIndex(index)
   }
 
-  const currentDataset = CHART_DATA[timeframe] || CHART_DATA.Week
+  const currentDataset = chartData[timeframe] || chartData.Week
   const safeIndex = Math.min(activePointIndex, currentDataset.labels.length - 1)
-  const currentPoint = currentDataset.curvePoints[safeIndex] || { x: 370, y: 95 }
-  const currentLabel = currentDataset.labels[safeIndex] || 'Thu'
-  const currentCollected = currentDataset.collected[safeIndex] || 350000
-  const currentProjected = currentDataset.projected[safeIndex] || 500000
+  const currentPoint = currentDataset.curvePoints[safeIndex] || { x: 370, y: 190 }
+  const currentLabel = currentDataset.labels[safeIndex] || 'Mon'
+  const currentCollected = currentDataset.collected[safeIndex] || 0
+  const currentProjected = currentDataset.projected[safeIndex] || 0
 
   // Calculate dynamic tooltip X to stay within screen boundaries
   const tooltipLeftPercent = Math.max(25, Math.min(75, (currentPoint.x / 700) * 100))
@@ -236,7 +288,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
           </div>
           <div className="obsidian-card-footer">
             <span className="trend-pill positive">
-              <ArrowUpRight size={13} /> +18.4% Since last month
+              <ArrowUpRight size={13} /> {Number(stats?.totalRevenue) > 0 ? '+18.4% Since last month' : '0.0% Since last month'}
             </span>
             <span className="card-mini-link" onClick={() => onNavigate('payments')}>
               View More ↗
@@ -253,10 +305,10 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
             </div>
           </div>
           <div className="obsidian-card-val">
-            {stats?.activeCount}/{stats?.totalProjects} <span className="unit">Plans</span>
+            {stats?.activeCount || 0}/{stats?.totalProjects || 0} <span className="unit">Plans</span>
           </div>
           <div className="obsidian-card-footer">
-            <span>Last plan updated 2h ago</span>
+            <span>{Number(stats?.totalProjects) > 0 ? 'Last plan updated recently' : 'No plans registered'}</span>
             <span className="card-mini-link" onClick={() => onNavigate('projects')}>
               View Plans ↗
             </span>
@@ -324,7 +376,9 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
                     className={`pill-tab ${timeframe === p ? 'active' : ''}`}
                     onClick={() => {
                       setTimeframe(p)
-                      setActivePointIndex(CHART_DATA[p].defaultIndex)
+                      if (chartData[p]) {
+                        setActivePointIndex(chartData[p].defaultIndex)
+                      }
                     }}
                   >
                     {p}
@@ -580,10 +634,16 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <Sparkles size={14} color="var(--primary)" />
               <strong style={{ fontSize: 12, color: 'var(--text-primary)' }}>AI Cashflow Forecast</strong>
-              <span className="badge badge-active" style={{ fontSize: 9, padding: '1px 6px' }}>+18%</span>
+              <span className="badge badge-active" style={{ fontSize: 9, padding: '1px 6px' }}>
+                {stats?.collectionRate || 0}%
+              </span>
             </div>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
-              Projected collection this week: <strong>Rs. 350,000</strong> from Luxury Residence detailed milestone.
+              {Number(stats?.totalOutstanding) > 0 ? (
+                <>Pending collection: <strong>{fmt(stats?.totalOutstanding)}</strong> across active house design plans.</>
+              ) : (
+                <>No pending balance. Add clients and projects to track architectural milestone payments.</>
+              )}
             </p>
           </div>
         </div>
