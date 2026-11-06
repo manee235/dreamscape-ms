@@ -200,22 +200,8 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
   return (
     <div>
       {/* QUICK MOBILE NUMBER LOOKUP BAR BANNER */}
-      <div
-        style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-color)',
-          borderRadius: 16,
-          padding: '14px 20px',
-          marginBottom: 20,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 12,
-          boxShadow: 'var(--card-shadow)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div className="customer-lookup-banner">
+        <div className="customer-lookup-banner-left">
           <div className="glow-badge-icon emerald">
             <Phone size={18} strokeWidth={2.5} />
           </div>
@@ -228,9 +214,8 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
         </div>
 
         <button
-          className="btn btn-primary btn-sm"
+          className="btn btn-primary btn-sm customer-lookup-banner-btn"
           onClick={onOpenCustomerLookup}
-          style={{ display: 'flex', alignItems: 'center', gap: 8 }}
         >
           <Search size={14} /> Search by Mobile #
         </button>

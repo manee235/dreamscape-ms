@@ -710,6 +710,34 @@ button, input, select, textarea {
   color: var(--primary);
 }
 
+/* Payment Top Stats Grid */
+.payment-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+/* Customer Lookup Banner */
+.customer-lookup-banner {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--card-shadow);
+}
+
+.customer-lookup-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 /* Dashboard Top Grid (4 cards like reference: Total Generated, Active Turbines, Wind Speed, Efficiency) */
 .obsidian-grid-4 {
   display: grid;
@@ -1501,15 +1529,186 @@ tbody td {
   }
 
   .page-content {
-    padding: 14px 12px 40px;
+    padding: 14px 12px 96px;
   }
 
   .mobile-bottom-bar {
     display: flex;
   }
 
+  /* Customer Mobile Lookup Banner on Mobile */
+  .customer-lookup-banner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+
+  .customer-lookup-banner-left {
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .customer-lookup-banner-left > div:last-child {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .customer-lookup-banner-left span {
+    font-size: 13px !important;
+    display: block;
+  }
+
+  .customer-lookup-banner-left p {
+    font-size: 11px !important;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .customer-lookup-banner-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  /* Dashboard 4 Top Metric Cards - Elegant 2x2 Grid */
   .obsidian-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .obsidian-grid-4 .obsidian-card {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  .obsidian-grid-4 .obsidian-card-top {
+    margin-bottom: 6px;
+  }
+
+  .obsidian-grid-4 .obsidian-card-label {
+    font-size: 11px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .obsidian-grid-4 .glow-badge-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+
+  .obsidian-grid-4 .glow-badge-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .obsidian-grid-4 .obsidian-card-val {
+    font-size: clamp(13px, 3.8vw, 17px);
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .obsidian-grid-4 .obsidian-card-footer {
+    font-size: 10px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .obsidian-grid-4 .card-mini-link {
+    display: none;
+  }
+
+  /* Payments Screen Top Stats - 1 Column with Full Width & Large Numbers */
+  .payment-stats-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .payment-stats-grid .obsidian-card {
+    padding: 16px 18px;
+    border-radius: 14px;
+  }
+
+  .payment-stats-grid .obsidian-card-val {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+  }
+
+  .payment-stats-grid .obsidian-card-footer {
+    font-size: 11px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Card Header on Mobile: Title on Top, Action Button Full Width Below */
+  .card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px 16px;
+  }
+
+  .card-header h2 {
+    font-size: 15px;
+  }
+
+  .card-header > .btn,
+  .card-header > button {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 16px;
+  }
+
+  /* Wave Chart Responsive */
+  .wave-chart-card {
+    padding: 16px 12px;
+    border-radius: 14px;
+  }
+
+  .wave-chart-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .wave-chart-header > div:last-child {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  /* Modals on Mobile */
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal {
+    border-radius: 18px;
+    max-height: 88vh;
+  }
+
+  .modal-header {
+    padding: 16px 18px;
+  }
+
+  .modal-body {
+    padding: 18px 16px;
   }
 
   .payment-summary {

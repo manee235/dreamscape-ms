@@ -284,7 +284,7 @@ export default function Payments() {
       )}
 
       {/* OBSIDIAN TOP STATS CAPSULES (Matching WindPulse Design) */}
-      <div className="obsidian-grid-4" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: 24 }}>
+      <div className="payment-stats-grid">
         {/* 1. Total Collected */}
         <div className="obsidian-card">
           <div className="obsidian-card-top">
