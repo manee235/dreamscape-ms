@@ -275,12 +275,12 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
 
       {/* 4 TOP OBSIDIAN METRIC CARDS */}
       <div className="obsidian-grid-4">
-        {/* 1. Total Revenue Collected */}
+        {/* 1. Total Revenue */}
         <div className="obsidian-card">
           <div className="obsidian-card-top">
-            <span className="obsidian-card-label">Total Revenue Collected</span>
+            <span className="obsidian-card-label">Total Revenue</span>
             <div className="glow-badge-icon emerald">
-              <TrendingUp size={18} strokeWidth={2.5} />
+              <TrendingUp size={16} strokeWidth={2.5} />
             </div>
           </div>
           <div className="obsidian-card-val" style={{ color: 'var(--primary)' }}>
@@ -291,36 +291,36 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
               <ArrowUpRight size={13} /> {Number(stats?.totalRevenue) > 0 ? '+18.4% Since last month' : '0.0% Since last month'}
             </span>
             <span className="card-mini-link" onClick={() => onNavigate('payments')}>
-              View More ↗
+              View ↗
             </span>
           </div>
         </div>
 
-        {/* 2. Active Projects */}
+        {/* 2. Active Plans */}
         <div className="obsidian-card">
           <div className="obsidian-card-top">
-            <span className="obsidian-card-label">Active House Designs</span>
+            <span className="obsidian-card-label">Active Plans</span>
             <div className="glow-badge-icon purple">
-              <FolderOpen size={18} strokeWidth={2.5} />
+              <FolderOpen size={16} strokeWidth={2.5} />
             </div>
           </div>
           <div className="obsidian-card-val">
             {stats?.activeCount || 0}/{stats?.totalProjects || 0} <span className="unit">Plans</span>
           </div>
           <div className="obsidian-card-footer">
-            <span>{Number(stats?.totalProjects) > 0 ? 'Last plan updated recently' : 'No plans registered'}</span>
+            <span>{Number(stats?.totalProjects) > 0 ? 'Updated recently' : 'No plans registered'}</span>
             <span className="card-mini-link" onClick={() => onNavigate('projects')}>
-              View Plans ↗
+              Plans ↗
             </span>
           </div>
         </div>
 
-        {/* 3. Outstanding Balance */}
+        {/* 3. Outstanding Due */}
         <div className="obsidian-card">
           <div className="obsidian-card-top">
-            <span className="obsidian-card-label">Outstanding Client Due</span>
+            <span className="obsidian-card-label">Outstanding Due</span>
             <div className="glow-badge-icon amber">
-              <Clock size={18} strokeWidth={2.5} />
+              <Clock size={16} strokeWidth={2.5} />
             </div>
           </div>
           <div className="obsidian-card-val" style={{ color: Number(stats?.totalOutstanding) > 0 ? '#f43f5e' : 'var(--primary)' }}>
@@ -336,12 +336,12 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
           </div>
         </div>
 
-        {/* 4. Collection Efficiency */}
+        {/* 4. Collection Rate */}
         <div className="obsidian-card">
           <div className="obsidian-card-top">
-            <span className="obsidian-card-label">Collection Efficiency</span>
+            <span className="obsidian-card-label">Collection Rate</span>
             <div className="glow-badge-icon blue">
-              <Compass size={18} strokeWidth={2.5} />
+              <Compass size={16} strokeWidth={2.5} />
             </div>
           </div>
           <div className="obsidian-card-val">
@@ -652,12 +652,17 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
       {/* RECENT PAYMENTS LOG TABLE */}
       <div className="card">
         <div className="card-header">
-          <h2>Recent Client Payments</h2>
+          <div>
+            <h2>Recent Client Payments</h2>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Latest settlement transactions</span>
+          </div>
           <button className="btn btn-primary btn-sm" onClick={() => onNavigate('payments')}>
             View All Payments
           </button>
         </div>
-        <div className="table-wrapper">
+
+        {/* Desktop Table (hidden on mobile <= 768px) */}
+        <div className="table-wrapper table-desktop-only">
           <table>
             <thead>
               <tr>
@@ -706,6 +711,36 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile View for Recent Payments */}
+        <div className="mobile-cards-list" style={{ padding: 14 }}>
+          {recentPayments.length === 0 ? (
+            <div className="empty-state" style={{ padding: 24, textAlign: 'center', width: '100%' }}>
+              <CreditCard size={32} style={{ color: 'var(--text-muted)', marginBottom: 8 }} />
+              <p style={{ color: 'var(--text-muted)', fontSize: 12 }}>No payment transactions recorded yet.</p>
+            </div>
+          ) : (
+            recentPayments.map((p) => (
+              <div key={p.id} className="mobile-data-card">
+                <div className="mobile-data-card-header">
+                  <div>
+                    <strong>{p.clientName}</strong>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.projectName}</div>
+                  </div>
+                  <strong style={{ color: 'var(--primary)', fontSize: 15 }}>{fmt(p.amount)}</strong>
+                </div>
+                <div className="mobile-data-card-row">
+                  <span>Method:</span>
+                  <span className="badge badge-active" style={{ fontSize: 11 }}>{p.payment_method}</span>
+                </div>
+                <div className="mobile-data-card-row">
+                  <span>Date:</span>
+                  <span>{new Date(p.payment_date).toLocaleDateString('en-GB')}</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

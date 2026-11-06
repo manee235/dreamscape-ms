@@ -417,6 +417,11 @@ button, input, select, textarea {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
   background: var(--bg-main);
   position: relative;
   z-index: 1;
@@ -584,6 +589,10 @@ button, input, select, textarea {
 .page-content {
   padding: 24px 32px 48px;
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* ===== OBSIDIAN CARDS (MATCHING REFERENCE IMAGE) ===== */
@@ -1438,6 +1447,11 @@ tbody td {
   .main-content {
     margin-left: 0;
     padding-bottom: 74px;
+    width: 100%;
+    max-width: 100vw;
+    min-width: 0;
+    overflow-x: hidden;
+    box-sizing: border-box;
   }
 
   .menu-toggle-btn {
@@ -1449,7 +1463,10 @@ tbody td {
   }
 
   .top-bar {
-    padding: 12px 14px;
+    padding: 10px 12px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .top-bar-left {
@@ -1499,17 +1516,22 @@ tbody td {
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .filter-bar .search-input {
     width: 100%;
     min-width: 100%;
+    box-sizing: border-box;
   }
 
   .filter-controls-group {
     display: flex;
     width: 100%;
     gap: 8px;
+    box-sizing: border-box;
   }
 
   .filter-controls-group .search-select {
@@ -1529,7 +1551,12 @@ tbody td {
   }
 
   .page-content {
-    padding: 14px 12px 96px;
+    padding: 12px 10px 96px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+    box-sizing: border-box;
   }
 
   .mobile-bottom-bar {
@@ -1541,18 +1568,25 @@ tbody td {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
-    padding: 14px 16px;
-    margin-bottom: 16px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
   .customer-lookup-banner-left {
     align-items: flex-start;
-    gap: 12px;
+    gap: 10px;
     min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .customer-lookup-banner-left > div:last-child {
     min-width: 0;
+    max-width: 100%;
     flex: 1;
   }
 
@@ -1569,65 +1603,114 @@ tbody td {
 
   .customer-lookup-banner-btn {
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     justify-content: center;
     padding: 10px 14px;
     font-size: 13px;
+    white-space: normal;
   }
 
-  /* Dashboard 4 Top Metric Cards - Elegant 2x2 Grid */
+  /* Dashboard 4 Top Metric Cards - Elegant 2x2 Grid (Strictly Constrained) */
   .obsidian-grid-4 {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .obsidian-grid-4 .obsidian-card {
-    padding: 12px 14px;
-    border-radius: 14px;
+    padding: 10px 10px;
+    border-radius: 12px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
   .obsidian-grid-4 .obsidian-card-top {
-    margin-bottom: 6px;
+    margin-bottom: 4px;
+    min-width: 0;
+    gap: 4px;
   }
 
   .obsidian-grid-4 .obsidian-card-label {
     font-size: 11px;
-    line-height: 1.25;
+    line-height: 1.2;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
   }
 
   .obsidian-grid-4 .glow-badge-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    flex-shrink: 0;
   }
 
   .obsidian-grid-4 .glow-badge-icon svg {
-    width: 15px;
-    height: 15px;
+    width: 13px;
+    height: 13px;
   }
 
   .obsidian-grid-4 .obsidian-card-val {
-    font-size: clamp(13px, 3.8vw, 17px);
+    font-size: clamp(12px, 3.8vw, 15px);
     font-weight: 700;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     letter-spacing: -0.2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
   }
 
   .obsidian-grid-4 .obsidian-card-footer {
-    font-size: 10px;
-    margin-top: 4px;
-    flex-wrap: wrap;
-    gap: 4px;
+    font-size: 9px;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
   }
 
   .obsidian-grid-4 .card-mini-link {
     display: none;
+  }
+
+  /* 2-Column Split: Single Column on Mobile */
+  .obsidian-main-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .conditions-inner-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .condition-cell {
+    padding: 8px 10px;
+    min-width: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .condition-cell-val {
+    font-size: 14px;
+    min-width: 0;
+    overflow: hidden;
   }
 
   /* Payments Screen Top Stats - 1 Column with Full Width & Large Numbers */
@@ -1635,11 +1718,15 @@ tbody td {
     grid-template-columns: 1fr;
     gap: 12px;
     margin-bottom: 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .payment-stats-grid .obsidian-card {
     padding: 16px 18px;
     border-radius: 14px;
+    box-sizing: border-box;
   }
 
   .payment-stats-grid .obsidian-card-val {
@@ -1661,7 +1748,10 @@ tbody td {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
-    padding: 16px 16px;
+    padding: 14px 14px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .card-header h2 {
@@ -1677,20 +1767,46 @@ tbody td {
 
   /* Wave Chart Responsive */
   .wave-chart-card {
-    padding: 16px 12px;
-    border-radius: 14px;
+    padding: 14px 10px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
   .wave-chart-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .wave-chart-header > div:last-child {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     width: 100%;
+    gap: 8px;
+    box-sizing: border-box;
+  }
+
+  .pill-tabs {
+    padding: 2px;
+  }
+
+  .pill-tab {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .chart-days-bar {
+    overflow-x: auto;
+    max-width: 100%;
+    padding: 8px 4px 0;
+    gap: 4px;
   }
 
   /* Modals on Mobile */
