@@ -64,7 +64,7 @@ Thank you for your payment! Here are the details of your transaction:
 Thank you for choosing *Dreamscape* to design your dream home!
 
 *Dreamscape Management System*
-📞 Inquiries: +94 77 123 4567`;
+📞 Inquiries: 0779962051`;
 }
 
 // Build professional receipt PDF jsPDF document & File object
@@ -113,7 +113,7 @@ export function buildReceiptPDFDoc({
 
   doc.setFontSize(7.5);
   doc.setTextColor(148, 163, 184);
-  doc.text('No 45, Architectural Ave, Colombo 07 | Tel: +94 77 123 4567 | info@dreamscape.lk', 14, 32);
+  doc.text('252/2 Kanduboda, Bamunakotuwa | Tel: 0779962051', 14, 32);
 
   // Receipt title on the right
   doc.setTextColor(255, 255, 255);

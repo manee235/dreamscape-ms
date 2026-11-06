@@ -117,7 +117,7 @@ ${clientProjects
 ---------------------------------------
 
 Thank you for planning your dream home with Dreamscape!
-📞 Contact: +94 77 123 4567`
+📞 Contact: 0779962051`
 
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank')
   }
