@@ -609,30 +609,31 @@ export default function Payments() {
                 style={{
                   width: 64,
                   height: 64,
-                  background: '#dcfce7',
-                  color: '#16a34a',
+                  background: 'rgba(0, 210, 147, 0.15)',
+                  color: '#00d293',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto 16px',
+                  boxShadow: '0 0 20px rgba(0, 210, 147, 0.25)',
                 }}
               >
                 <CheckCircle size={36} />
               </div>
 
-              <h2 style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', marginBottom: 6 }}>
+              <h2 style={{ fontSize: 22, fontWeight: 800, color: '#ffffff', marginBottom: 6 }}>
                 Payment Successfully Recorded!
               </h2>
-              <p style={{ color: '#64748b', fontSize: 14, marginBottom: 20 }}>
+              <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 20 }}>
                 Official PDF receipt has been generated and downloaded.
               </p>
 
               {/* Receipt Summary Card */}
               <div
                 style={{
-                  background: '#f8fafc',
-                  border: '1px solid #e2e8f0',
+                  background: '#101522',
+                  border: '1px solid #232d42',
                   borderRadius: 14,
                   padding: 18,
                   textAlign: 'left',
@@ -640,15 +641,15 @@ export default function Payments() {
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontSize: 13, color: '#64748b' }}>Client:</span>
-                  <strong style={{ fontSize: 13, color: '#1e293b' }}>
+                  <span style={{ fontSize: 13, color: '#94a3b8' }}>Client:</span>
+                  <strong style={{ fontSize: 13, color: '#ffffff' }}>
                     {successReceipt.clientName}{' '}
                     {successReceipt.clientPhone ? `(${successReceipt.clientPhone})` : ''}
                   </strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontSize: 13, color: '#64748b' }}>Project:</span>
-                  <span style={{ fontSize: 13, color: '#1e293b', fontWeight: 600 }}>
+                  <span style={{ fontSize: 13, color: '#94a3b8' }}>Project:</span>
+                  <span style={{ fontSize: 13, color: '#ffffff', fontWeight: 600 }}>
                     {successReceipt.projectName}
                   </span>
                 </div>
@@ -657,18 +658,18 @@ export default function Payments() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     marginBottom: 8,
-                    borderTop: '1px dashed #cbd5e1',
+                    borderTop: '1px dashed #232d42',
                     paddingTop: 8,
                   }}
                 >
-                  <span style={{ fontSize: 13, color: '#64748b' }}>Amount Paid:</span>
-                  <strong style={{ fontSize: 15, color: '#16a34a' }}>
+                  <span style={{ fontSize: 13, color: '#94a3b8' }}>Amount Paid:</span>
+                  <strong style={{ fontSize: 15, color: '#00d293' }}>
                     {formatLKR(successReceipt.amountPaid)}
                   </strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontSize: 13, color: '#64748b' }}>Total Contract Value:</span>
-                  <span style={{ fontSize: 13, color: '#1e293b' }}>
+                  <span style={{ fontSize: 13, color: '#94a3b8' }}>Total Contract Value:</span>
+                  <span style={{ fontSize: 13, color: '#ffffff' }}>
                     {formatLKR(successReceipt.totalAmount)}
                   </span>
                 </div>
@@ -676,17 +677,17 @@ export default function Payments() {
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    borderTop: '1px solid #cbd5e1',
+                    borderTop: '1px solid #232d42',
                     paddingTop: 8,
                   }}
                 >
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#ffffff' }}>
                     Remaining to Pay:
                   </span>
                   <strong
                     style={{
                       fontSize: 15,
-                      color: Number(successReceipt.remainingAmount) <= 0 ? '#16a34a' : '#dc2626',
+                      color: Number(successReceipt.remainingAmount) <= 0 ? '#00d293' : '#f43f5e',
                     }}
                   >
                     {Number(successReceipt.remainingAmount) <= 0

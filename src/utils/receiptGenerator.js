@@ -275,3 +275,4 @@ export function generateReceiptPDF({
 
   return doc;
 }
+

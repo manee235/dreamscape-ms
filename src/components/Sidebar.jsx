@@ -4,15 +4,16 @@ import {
   Users,
   FolderOpen,
   CreditCard,
-  FileText,
-  Home,
   LogOut,
+  Compass,
+  ArrowRight,
+  FileSpreadsheet,
 } from 'lucide-react'
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'clients', label: 'Clients', icon: Users },
-  { id: 'projects', label: 'Projects', icon: FolderOpen },
+  { id: 'projects', label: 'Projects', icon: FolderOpen, badge: 'Live' },
+  { id: 'clients', label: 'Customers', icon: Users },
   { id: 'payments', label: 'Payments', icon: CreditCard },
 ]
 
@@ -22,28 +23,46 @@ export default function Sidebar({ activePage, onNavigate, user, onLogout }) {
       <div className="sidebar-header">
         <div className="brand">
           <div className="brand-icon">
-            <Home size={22} />
+            <Compass size={22} strokeWidth={2.5} />
           </div>
           <div className="brand-text">
-            <h2>Dreamscape</h2>
-            <span>Management System</span>
+            <h2>DREAMSCAPE</h2>
+            <span>DESIGN &amp; PLANNING</span>
           </div>
         </div>
       </div>
 
       <nav className="sidebar-nav">
         <div className="nav-section-label">Main Menu</div>
-        {navItems.map(({ id, label, icon: Icon }) => (
+        {navItems.map(({ id, label, icon: Icon, badge }) => (
           <button
             key={id}
             className={`nav-item ${activePage === id ? 'active' : ''}`}
             onClick={() => onNavigate(id)}
           >
-            <Icon size={18} />
-            {label}
+            <div className="nav-item-left">
+              <Icon size={18} strokeWidth={2} />
+              <span>{label}</span>
+            </div>
+            {badge && <span className="nav-badge">{badge}</span>}
+            {activePage === id && <div className="nav-indicator" />}
           </button>
         ))}
       </nav>
+
+      {/* Floating Emerald Summary Card matching reference bottom-left */}
+      <div className="sidebar-promo">
+        <h4>Summary Report</h4>
+        <p>Export all project cashflow &amp; balance statements</p>
+        <button
+          className="promo-btn"
+          onClick={() => onNavigate('payments')}
+        >
+          <FileSpreadsheet size={13} />
+          <span>View Reports</span>
+          <ArrowRight size={12} />
+        </button>
+      </div>
 
       <div className="sidebar-footer">
         <div className="sidebar-user">
@@ -51,16 +70,15 @@ export default function Sidebar({ activePage, onNavigate, user, onLogout }) {
             {user?.username?.[0]?.toUpperCase() || 'A'}
           </div>
           <div className="user-info">
-            <strong>{user?.username || 'Admin'}</strong>
-            <span>Administrator</span>
+            <strong>{user?.fullName || user?.username || 'Admin'}</strong>
+            <span>Lead Architect &amp; Admin</span>
           </div>
         </div>
         <button className="logout-btn" onClick={onLogout}>
-          <LogOut size={16} />
-          Sign Out
+          <LogOut size={14} />
+          <span>Sign Out</span>
         </button>
       </div>
     </aside>
   )
 }
-

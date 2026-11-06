@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './index.css'
 import Login from './components/Login'
 import Sidebar from './components/Sidebar'
@@ -6,12 +6,20 @@ import Dashboard from './components/Dashboard'
 import Clients from './components/Clients'
 import Projects from './components/Projects'
 import Payments from './components/Payments'
+import {
+  Menu,
+  Search,
+  Plus,
+  Bell,
+  Mail,
+  SlidersHorizontal,
+} from 'lucide-react'
 
 const PAGE_TITLES = {
   dashboard: 'Dashboard',
-  clients: 'Clients',
-  projects: 'Projects',
-  payments: 'Payments',
+  clients: 'Customers',
+  projects: 'House Design Projects',
+  payments: 'Payment Management',
 }
 
 function App() {
@@ -19,9 +27,12 @@ function App() {
     try {
       const saved = sessionStorage.getItem('dms_user')
       return saved ? JSON.parse(saved) : null
-    } catch { return null }
+    } catch {
+      return null
+    }
   })
   const [page, setPage] = useState('dashboard')
+  const [globalSearch, setGlobalSearch] = useState('')
 
   const handleLogin = (u) => {
     setUser(u)
@@ -38,11 +49,16 @@ function App() {
 
   const renderPage = () => {
     switch (page) {
-      case 'dashboard': return <Dashboard onNavigate={setPage} />
-      case 'clients':   return <Clients />
-      case 'projects':  return <Projects onNavigate={setPage} />
-      case 'payments':  return <Payments />
-      default:          return <Dashboard onNavigate={setPage} />
+      case 'dashboard':
+        return <Dashboard onNavigate={setPage} />
+      case 'clients':
+        return <Clients />
+      case 'projects':
+        return <Projects onNavigate={setPage} />
+      case 'payments':
+        return <Payments />
+      default:
+        return <Dashboard onNavigate={setPage} />
     }
   }
 
@@ -55,15 +71,52 @@ function App() {
         onLogout={handleLogout}
       />
       <main className="main-content">
-        <div className="top-bar">
-          <h1>{PAGE_TITLES[page] || 'Dashboard'}</h1>
-          <span className="top-bar-meta">
-            Dreamscape MS &mdash; {new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </span>
-        </div>
-        <div className="page-content">
-          {renderPage()}
-        </div>
+        {/* Top bar matching reference screenshot */}
+        <header className="top-bar">
+          <div className="top-bar-left">
+            <button className="menu-toggle-btn" title="Navigation">
+              <Menu size={20} />
+            </button>
+            <h1>{PAGE_TITLES[page] || 'Dashboard'}</h1>
+          </div>
+
+          <div className="top-bar-center">
+            <div className="top-search-box">
+              <Search size={16} />
+              <input
+                type="text"
+                placeholder="Search here..."
+                value={globalSearch}
+                onChange={(e) => setGlobalSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="top-bar-right">
+            <button
+              className="top-action-btn mint"
+              title="Record Payment"
+              onClick={() => setPage('payments')}
+            >
+              <Plus size={18} strokeWidth={2.5} />
+            </button>
+            <button className="top-action-btn" title="Messages">
+              <Mail size={16} />
+            </button>
+            <button className="top-action-btn" title="Notifications">
+              <Bell size={16} />
+              <div className="dot-badge" />
+            </button>
+            <div className="user-profile-chip" onClick={() => setPage('dashboard')}>
+              <div className="chip-avatar">
+                {user?.username?.[0]?.toUpperCase() || 'A'}
+              </div>
+              <span>{user?.username || 'Admin'}</span>
+            </div>
+          </div>
+        </header>
+
+        <div className="page-content">{renderPage()}</div>
       </main>
     </div>
   )

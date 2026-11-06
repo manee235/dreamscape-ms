@@ -174,7 +174,7 @@ export default function Projects() {
           onChange={e => setSearch(e.target.value)}
         />
         <select
-          style={{ padding: '10px 14px', border: '2px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none' }}
+          style={{ padding: '10px 16px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: 10, color: '#ffffff', outline: 'none' }}
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value)}
         >
