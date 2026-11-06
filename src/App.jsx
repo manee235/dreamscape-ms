@@ -12,7 +12,6 @@ import {
   Menu,
   Search,
   Plus,
-  Bell,
   Sun,
   Moon,
   RefreshCw,
@@ -26,8 +25,8 @@ import {
 const PAGE_TITLES = {
   dashboard: 'Dashboard',
   clients: 'Customers',
-  projects: 'House Design Projects',
-  payments: 'Payment Management',
+  projects: 'Projects',
+  payments: 'Payments',
 }
 
 function App() {
@@ -145,7 +144,7 @@ function App() {
           onMarkPayment={() => navigateTo('payments')}
         />
 
-        {/* Enhanced Top Bar */}
+        {/* Clean, Mobile-Optimized Top Bar */}
         <header className="top-bar">
           <div className="top-bar-left">
             <button
@@ -155,12 +154,12 @@ function App() {
             >
               <Menu size={22} />
             </button>
-            <h1>{PAGE_TITLES[page] || 'Dashboard'}</h1>
+            <h1 className="top-bar-title">{PAGE_TITLES[page] || 'Dashboard'}</h1>
 
             {/* Live Realtime Sync Status Indicator */}
             <div className="live-sync-indicator" title="Connected to Supabase Realtime for instant updates">
               <span className="pulse-dot" />
-              <span>Live Sync</span>
+              <span className="live-sync-text">Live Sync</span>
             </div>
           </div>
 
@@ -184,18 +183,18 @@ function App() {
           </div>
 
           <div className="top-bar-right">
-            {/* Mobile Search Button (visible on mobile only) */}
+            {/* Mobile Lookup Button */}
             <button
-              className="top-action-btn"
+              className="top-action-btn mobile-lookup-btn"
               title="Search Customer Mobile Number"
               onClick={() => setCustomerLookupOpen(true)}
             >
-              <Phone size={16} color="var(--primary)" />
+              <Phone size={15} color="var(--primary)" />
             </button>
 
-            {/* Fast Manual Refresh */}
+            {/* Fast Manual Refresh (Desktop only, mobile has bottom bar & realtime) */}
             <button
-              className="top-action-btn"
+              className="top-action-btn desktop-only-btn"
               title="Fast Data Refresh"
               onClick={triggerFastRefresh}
             >
@@ -211,12 +210,12 @@ function App() {
               title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
               onClick={toggleTheme}
             >
-              {theme === 'dark' ? <Sun size={17} color="#f59e0b" /> : <Moon size={17} />}
+              {theme === 'dark' ? <Sun size={16} color="#f59e0b" /> : <Moon size={16} />}
             </button>
 
-            {/* Quick Action: Mark Payment */}
+            {/* Quick Action: Mark Payment (Desktop only, mobile has floating center action) */}
             <button
-              className="top-action-btn mint"
+              className="top-action-btn mint desktop-only-btn"
               title="Mark New Payment"
               onClick={() => navigateTo('payments')}
             >
@@ -228,7 +227,7 @@ function App() {
               <div className="chip-avatar">
                 {user?.username?.[0]?.toUpperCase() || 'A'}
               </div>
-              <span>{user?.username || 'Admin'}</span>
+              <span className="user-profile-name">{user?.username || 'Admin'}</span>
             </div>
           </div>
         </header>

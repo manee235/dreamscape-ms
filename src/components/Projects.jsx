@@ -187,19 +187,20 @@ export default function Projects() {
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
-        <select
-          className="search-input"
-          style={{ flex: 'none', width: 'auto', minWidth: 140 }}
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
-        >
-          {['All', 'Active', 'Completed', 'On Hold', 'Cancelled'].map(s => (
-            <option key={s}>{s}</option>
-          ))}
-        </select>
-        <button className="btn btn-primary" onClick={openAdd}>
-          <Plus size={16} /> New Project
-        </button>
+        <div className="filter-controls-group">
+          <select
+            className="search-select"
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+          >
+            {['All', 'Active', 'Completed', 'On Hold', 'Cancelled'].map(s => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
+          <button className="btn btn-primary" onClick={openAdd}>
+            <Plus size={16} /> New Project
+          </button>
+        </div>
       </div>
 
       {loading && summary.length === 0 ? (

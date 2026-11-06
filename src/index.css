@@ -78,12 +78,16 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: var(--bg-main);
   color: var(--text-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+button, input, select, textarea {
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* ===== APP LAYOUT ===== */
@@ -1031,6 +1035,29 @@ tbody td {
   flex-wrap: wrap;
 }
 
+.filter-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-select {
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 13px;
+  font-family: 'Poppins', sans-serif;
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.search-select:focus {
+  border-color: var(--primary);
+}
+
 .search-input {
   flex: 1;
   min-width: 200px;
@@ -1394,11 +1421,87 @@ tbody td {
   }
 
   .top-bar {
-    padding: 14px 18px;
+    padding: 12px 14px;
+  }
+
+  .top-bar-left {
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .top-bar-title {
+    font-size: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+
+  .live-sync-indicator {
+    padding: 3px 6px;
+  }
+
+  .live-sync-text {
+    display: none;
+  }
+
+  .top-bar-right {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .desktop-only-btn {
+    display: none !important;
+  }
+
+  .user-profile-name {
+    display: none;
+  }
+
+  .user-profile-chip {
+    padding: 2px;
+    background: transparent;
+    border: none;
+  }
+
+  /* Responsive Filter Bar */
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .filter-bar .search-input {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .filter-controls-group {
+    display: flex;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .filter-controls-group .search-select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .filter-controls-group .btn {
+    flex: 1;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  .filter-bar > .btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .page-content {
-    padding: 16px 14px 40px;
+    padding: 14px 12px 40px;
   }
 
   .mobile-bottom-bar {
