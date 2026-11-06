@@ -1146,6 +1146,36 @@ tbody td {
   color: var(--text-primary);
   outline: none;
   transition: all 0.2s;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Remove number stepper arrows for clean fintech inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Dark Theme Date Picker Alignment */
+input[type="date"] {
+  color-scheme: dark;
+}
+[data-theme="light"] input[type="date"] {
+  color-scheme: light;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: invert(0.8) brightness(1.2);
+  opacity: 0.85;
+}
+[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: none;
+  opacity: 0.7;
 }
 
 .form-group input:focus,

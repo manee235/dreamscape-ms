@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import {
   generateReceiptPDF,
+  shareReceiptViaWhatsApp,
   generateWhatsAppMessage,
   formatWhatsAppPhone,
   formatLKR,
@@ -45,6 +46,7 @@ export default function Payments() {
   const [saving, setSaving] = useState(false)
   const [alert, setAlert] = useState(null)
   const [selectedProject, setSelectedProject] = useState(null)
+  const [autoWhatsApp, setAutoWhatsApp] = useState(true)
 
   // Success dialog state after saving payment
   const [successReceipt, setSuccessReceipt] = useState(null)
@@ -179,14 +181,8 @@ export default function Payments() {
     }))
   }
 
-  const sendWhatsApp = (receiptData) => {
-    const phone = formatWhatsAppPhone(receiptData.clientPhone)
-    const msg = generateWhatsAppMessage(receiptData)
-    const url = phone
-      ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
-      : `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`
-
-    window.open(url, '_blank')
+  const sendWhatsApp = async (receiptData) => {
+    await shareReceiptViaWhatsApp(receiptData, true)
   }
 
   const handleSave = async (e) => {
@@ -238,10 +234,15 @@ export default function Payments() {
         notes: form.notes,
       }
 
-      try {
-        generateReceiptPDF(receiptPayload)
-      } catch (pdfErr) {
-        console.error('PDF Generation error:', pdfErr)
+      // If auto-send is checked, immediately share/open WhatsApp with the PDF file
+      if (autoWhatsApp) {
+        await shareReceiptViaWhatsApp(receiptPayload, true)
+      } else {
+        try {
+          generateReceiptPDF(receiptPayload)
+        } catch (pdfErr) {
+          console.error('PDF Generation error:', pdfErr)
+        }
       }
 
       setSuccessReceipt(receiptPayload)
@@ -705,26 +706,98 @@ export default function Payments() {
                       <option value="">Choose project...</option>
                       {projects.map((p) => (
                         <option key={p.project_id} value={p.project_id}>
-                          {p.client_name} — {p.project_name} (Remaining:{' '}
-                          {formatLKR(p.remaining_amount)})
+                          {p.client_name} • {p.project_name}
                         </option>
                       ))}
                     </select>
+                    {selectedProject && (
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          fontSize: 11,
+                          color: 'var(--text-muted)',
+                          marginTop: 4,
+                          padding: '0 2px',
+                        }}
+                      >
+                        <span>Client: <strong style={{ color: 'var(--text-primary)' }}>{selectedProject.client_name}</strong></span>
+                        <span>Phone: <strong style={{ color: 'var(--primary)' }}>{selectedProject.client_phone || 'No phone'}</strong></span>
+                      </div>
+                    )}
                   </div>
+
                   <div className="form-group">
-                    <label>Amount Paid (Rs.) *</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label>Amount Paid (Rs.) *</label>
+                      {selectedProject && Number(selectedProject.remaining_amount) > 0 && (
+                        <button
+                          type="button"
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--primary)',
+                            fontSize: 11,
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            padding: 0,
+                          }}
+                          onClick={() => setForm({ ...form, amount: String(selectedProject.remaining_amount) })}
+                        >
+                          Full Balance
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="number"
                       required
                       min="0.01"
                       step="0.01"
-                      placeholder="0.00"
+                      placeholder="e.g. 50000"
                       value={form.amount}
                       onChange={(e) => setForm({ ...form, amount: e.target.value })}
                     />
+                    {selectedProject && Number(selectedProject.remaining_amount) > 0 && (
+                      <div style={{ display: 'flex', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm"
+                          style={{ fontSize: 10.5, padding: '2px 8px', borderRadius: 6 }}
+                          onClick={() => setForm({ ...form, amount: String(selectedProject.remaining_amount) })}
+                        >
+                          Full Due ({formatLKR(selectedProject.remaining_amount)})
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm"
+                          style={{ fontSize: 10.5, padding: '2px 8px', borderRadius: 6 }}
+                          onClick={() => setForm({ ...form, amount: String(Math.round(selectedProject.remaining_amount * 0.5)) })}
+                        >
+                          50% ({formatLKR(Math.round(selectedProject.remaining_amount * 0.5))})
+                        </button>
+                      </div>
+                    )}
                   </div>
+
                   <div className="form-group">
-                    <label>Payment Date *</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label>Payment Date *</label>
+                      <button
+                        type="button"
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-muted)',
+                          fontSize: 11,
+                          cursor: 'pointer',
+                          padding: 0,
+                        }}
+                        onClick={() => setForm({ ...form, payment_date: new Date().toISOString().split('T')[0] })}
+                      >
+                        Today
+                      </button>
+                    </div>
                     <input
                       type="date"
                       required
@@ -732,6 +805,7 @@ export default function Payments() {
                       onChange={(e) => setForm({ ...form, payment_date: e.target.value })}
                     />
                   </div>
+
                   <div className="form-group">
                     <label>Payment Method</label>
                     <select
@@ -743,6 +817,7 @@ export default function Payments() {
                       ))}
                     </select>
                   </div>
+
                   <div className="form-group">
                     <label>Reference / Cheque No.</label>
                     <input
@@ -751,15 +826,48 @@ export default function Payments() {
                       onChange={(e) => setForm({ ...form, reference_number: e.target.value })}
                     />
                   </div>
+
                   <div className="form-group full-width">
                     <label>Notes</label>
                     <textarea
+                      rows={2}
                       placeholder="Optional payment notes..."
                       value={form.notes}
                       onChange={(e) => setForm({ ...form, notes: e.target.value })}
                     />
                   </div>
+
+                  {/* Auto WhatsApp Dispatch Option */}
+                  <div
+                    className="form-group full-width"
+                    style={{
+                      marginTop: 2,
+                      padding: '10px 14px',
+                      background: 'var(--bg-card-sub)',
+                      borderRadius: 10,
+                      border: '1px solid var(--border-color)',
+                    }}
+                  >
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', margin: 0 }}>
+                      <input
+                        type="checkbox"
+                        checked={autoWhatsApp}
+                        onChange={(e) => setAutoWhatsApp(e.target.checked)}
+                        style={{ width: 17, height: 17, accentColor: '#25D366', cursor: 'pointer' }}
+                      />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
+                        <MessageCircle size={15} color="#25D366" />
+                        <span>Send PDF Receipt to Client's WhatsApp automatically upon saving</span>
+                      </div>
+                    </label>
+                    {selectedProject?.client_phone && (
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 27, marginTop: 2 }}>
+                        Recipient: <strong style={{ color: '#25D366' }}>{selectedProject.client_phone}</strong>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
                 <div className="form-actions">
                   <button type="button" className="btn btn-outline" onClick={closeModal}>
                     Cancel
@@ -888,7 +996,7 @@ export default function Payments() {
                   }}
                   onClick={() => sendWhatsApp(successReceipt)}
                 >
-                  <MessageCircle size={18} /> Send Receipt via WhatsApp
+                  <MessageCircle size={18} /> Send / Share PDF to WhatsApp
                 </button>
 
                 <button
@@ -896,8 +1004,23 @@ export default function Payments() {
                   style={{ justifyContent: 'center', padding: 11 }}
                   onClick={() => generateReceiptPDF(successReceipt)}
                 >
-                  <Download size={15} /> Re-download PDF Receipt
+                  <Download size={15} /> Download PDF Receipt File
                 </button>
+
+                <div
+                  style={{
+                    background: 'rgba(37, 211, 102, 0.08)',
+                    border: '1px solid rgba(37, 211, 102, 0.25)',
+                    borderRadius: 10,
+                    padding: '8px 12px',
+                    fontSize: 11,
+                    color: 'var(--text-secondary)',
+                    textAlign: 'left',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  💡 <strong>WhatsApp Delivery:</strong> On mobile phones, WhatsApp will open directly with the PDF file attached. On desktop, attach the automatically downloaded PDF file into the opened chat.
+                </div>
 
                 <button
                   className="btn"
@@ -906,7 +1029,7 @@ export default function Payments() {
                     border: 'none',
                     color: 'var(--text-muted)',
                     justifyContent: 'center',
-                    marginTop: 4,
+                    marginTop: 2,
                   }}
                   onClick={() => setShowSuccessModal(false)}
                 >
