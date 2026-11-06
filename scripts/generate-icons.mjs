@@ -107,3 +107,4 @@ console.log('Created public/icon-192.png');
 const p512 = createPNG(512, bg, fg);
 fs.writeFileSync(path.resolve('public/icon-512.png'), p512);
 console.log('Created public/icon-512.png');
+

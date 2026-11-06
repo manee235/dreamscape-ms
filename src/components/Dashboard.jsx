@@ -407,13 +407,6 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
             }}
           >
             <svg width="100%" height="100%" viewBox="0 0 700 230" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="emeraldWaveGlow" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#00d293" stopOpacity="0.28" />
-                  <stop offset="100%" stopColor="#00d293" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-
               {/* Horizontal Grid Lines */}
               <line x1="0" y1="50" x2="700" y2="50" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.35" />
               <line x1="0" y1="100" x2="700" y2="100" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.35" />
@@ -435,7 +428,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
               {/* Shaded Area Under Curve */}
               <path
                 d={currentDataset.fillPath}
-                fill="url(#emeraldWaveGlow)"
+                fill="rgba(0, 210, 147, 0.08)"
               />
 
               {/* Main Glowing Emerald Curve */}

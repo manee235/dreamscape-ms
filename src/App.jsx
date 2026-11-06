@@ -118,10 +118,6 @@ function App() {
 
   return (
     <div className="app-layout">
-      {/* Subtle Ambient Glows */}
-      <div className="ambient-glow-1" />
-      <div className="ambient-glow-2" />
-
       {/* Mobile Drawer Backdrop */}
       <div
         className={`mobile-drawer-backdrop ${mobileMenuOpen ? 'open' : ''}`}
