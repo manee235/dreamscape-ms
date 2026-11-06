@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Home, Lock, User, Eye, EyeOff, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { supabase } from '../supabase'
 
 const DEFAULT_CREDENTIALS = {
@@ -48,7 +48,7 @@ export default function Login({ onLogin }) {
       } else {
         setError('Invalid username or password. Please try again.')
       }
-    } catch (err) {
+    } catch {
       // Offline / network fallback
       if (
         username.trim().toLowerCase() === DEFAULT_CREDENTIALS.username &&
@@ -64,90 +64,78 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        {/* Brand Header */}
-        <div className="login-logo">
-          <div className="login-logo-badge">
-            <Home size={26} strokeWidth={2.2} />
-          </div>
-          <h1>Dreamscape MS</h1>
-          <p>House Design &amp; Planning Agency Management</p>
+    <div className="mobile-login-wrapper">
+      <div className="mobile-login-container">
+        {/* Top Solid Blue Hero Section */}
+        <div className="mobile-login-hero">
+          <h1 className="mobile-login-brand">Dreamscape</h1>
         </div>
 
-        {/* Error notification */}
-        {error && (
-          <div className="login-error">
-            <AlertCircle size={15} style={{ flexShrink: 0 }} />
-            <span>{error}</span>
+        {/* Bottom Curved Sheet */}
+        <div className="mobile-login-sheet">
+          <div className="mobile-login-header">
+            <h2 className="mobile-login-title">Welcome Back</h2>
+            <p className="mobile-login-subtitle">Enter your details below</p>
           </div>
-        )}
 
-        {/* Login Form */}
-        <form className="login-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
-              Admin Username
-            </label>
-            <div className="login-input-wrapper">
-              <span className="login-input-icon">
-                <User size={16} />
-              </span>
+          {/* Error notification */}
+          {error && (
+            <div className="mobile-login-error">
+              <AlertCircle size={15} style={{ flexShrink: 0 }} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Clean Login Form */}
+          <form className="mobile-login-form" onSubmit={handleSubmit}>
+            {/* Username Card */}
+            <div className="mobile-input-card">
+              <label className="mobile-input-label">Username</label>
               <input
                 type="text"
-                className="login-input-field"
-                placeholder="Enter your username"
+                className="mobile-input-control"
+                placeholder="Enter username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoFocus
                 required
               />
             </div>
-          </div>
 
-          <div className="form-group">
-            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
-              Password
-            </label>
-            <div className="login-input-wrapper">
-              <span className="login-input-icon">
-                <Lock size={16} />
-              </span>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                className="login-input-field"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                className="password-toggle-btn"
-                onClick={() => setShowPassword(!showPassword)}
-                title={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+            {/* Password Card */}
+            <div className="mobile-input-card">
+              <label className="mobile-input-label">Password</label>
+              <div className="mobile-input-password-row">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="mobile-input-control"
+                  placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="mobile-eye-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                </button>
+              </div>
             </div>
+
+            {/* Solid Sign In Button */}
+            <button type="submit" className="mobile-signin-btn" disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign in'}
+            </button>
+          </form>
+
+          {/* Minimal Footer */}
+          <div className="mobile-login-footer">
+            Admin Access Only &bull; Dreamscape MS
           </div>
-
-          <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? (
-              <span>Authenticating...</span>
-            ) : (
-              <>
-                <span>Sign In to Dashboard</span>
-                <ArrowRight size={16} />
-              </>
-            )}
-          </button>
-        </form>
-
-        {/* Footer */}
-        <div className="login-footer">
-          <ShieldCheck size={12} style={{ display: 'inline', marginRight: 4, verticalAlign: -1, color: 'var(--primary)' }} />
-          Admin secure authentication &bull; Dreamscape MS v2.0
         </div>
       </div>
     </div>
