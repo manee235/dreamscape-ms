@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
-import { Home, Lock, User, Eye, EyeOff, ArrowRight, ShieldCheck, AlertCircle, KeyRound } from 'lucide-react'
+import { Home, Lock, User, Eye, EyeOff, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react'
 import { supabase } from '../supabase'
 
 const DEFAULT_CREDENTIALS = {
-  username: 'isanka',
-  password: 'tharindu',
+  username: 'isanka.t',
+  password: 'thari@creation',
 }
 
 export default function Login({ onLogin }) {
@@ -63,12 +63,6 @@ export default function Login({ onLogin }) {
     }
   }
 
-  const fillQuickDemo = () => {
-    setUsername(DEFAULT_CREDENTIALS.username)
-    setPassword(DEFAULT_CREDENTIALS.password)
-    setError('')
-  }
-
   return (
     <div className="login-page">
       <div className="login-card">
@@ -102,7 +96,7 @@ export default function Login({ onLogin }) {
               <input
                 type="text"
                 className="login-input-field"
-                placeholder="Enter username (e.g. isanka)"
+                placeholder="Enter your username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoFocus
@@ -149,19 +143,6 @@ export default function Login({ onLogin }) {
             )}
           </button>
         </form>
-
-        {/* Quick Demo Credentials Autofill Pill */}
-        <div
-          className="login-quick-pill"
-          onClick={fillQuickDemo}
-          title="Click to automatically fill default credentials"
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <KeyRound size={13} color="var(--primary)" />
-            <span>Default Login: <strong>isanka</strong> / <strong>tharindu</strong></span>
-          </div>
-          <span style={{ fontSize: 10, color: 'var(--primary)', fontWeight: 600 }}>1-Click Fill ↗</span>
-        </div>
 
         {/* Footer */}
         <div className="login-footer">
