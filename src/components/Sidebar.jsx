@@ -8,6 +8,7 @@ import {
   Sparkles,
   ChevronDown,
   Search,
+  Settings,
   MoreVertical,
 } from 'lucide-react'
 import logoSvg from '../assets/logo.svg'
@@ -17,6 +18,7 @@ const navItems = [
   { id: 'projects', label: 'Projects', icon: FolderOpen, badge: 'Live' },
   { id: 'clients', label: 'Customers', icon: Users },
   { id: 'payments', label: 'Payments', icon: CreditCard },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ]
 
 export default function Sidebar({
@@ -121,7 +123,12 @@ export default function Sidebar({
 
       <div className="sidebar-footer">
         {!isCollapsed && <div className="user-section-label">USER ACCOUNT</div>}
-        <div className="sidebar-user-card" title={user?.fullName || user?.username || 'Admin'}>
+        <div
+          className="sidebar-user-card"
+          title="View Settings & Profile"
+          onClick={() => onNavigate('settings')}
+          style={{ cursor: 'pointer' }}
+        >
           <div className="user-avatar-wrap">
             <div className="user-avatar">
               {user?.username?.[0]?.toUpperCase() || 'A'}
@@ -130,15 +137,18 @@ export default function Sidebar({
           </div>
           {!isCollapsed && (
             <div className="user-info">
-              <strong className="user-name">{user?.fullName || user?.username || 'Alex Williamson'}</strong>
+              <strong className="user-name">{user?.fullName || (user?.username === 'isanka.t' ? 'Isanka Thiwanka' : user?.username || 'Alex Williamson')}</strong>
               <span className="user-role">#ds-1974 · Admin</span>
             </div>
           )}
           {!isCollapsed && (
             <button
               className="user-options-btn"
-              onClick={onLogout}
-              title="Sign Out / Switch User"
+              onClick={(e) => {
+                e.stopPropagation()
+                onNavigate('settings')
+              }}
+              title="Studio Settings"
             >
               <MoreVertical size={16} color="#64748b" />
             </button>

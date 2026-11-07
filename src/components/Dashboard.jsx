@@ -9,6 +9,12 @@ import {
   Search,
   CreditCard,
   Plus,
+  UserPlus,
+  FolderPlus,
+  Bell,
+  Menu,
+  Send,
+  Layers,
 } from 'lucide-react'
 
 function fmt(n) {
@@ -105,7 +111,7 @@ function buildChartData(paymentsList = [], projectsList = [], timeframe = 'Week'
   }
 }
 
-export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
+export default function Dashboard({ onNavigate, onOpenCustomerLookup, user, onOpenMobileMenu }) {
   const [stats, setStats] = useState(null)
   const [recentPayments, setRecentPayments] = useState([])
   const [timeframe, setTimeframe] = useState('Week')
@@ -219,106 +225,263 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
 
   const tooltipLeftPercent = ((currentPoint.x) / 700) * 100
 
+  const currentHour = new Date().getHours()
+  const greetingText = currentHour < 12 ? 'Good Morning' : currentHour < 18 ? 'Good Afternoon' : 'Good Evening'
+  const userName = user?.fullName || (user?.username === 'isanka.t' ? 'Isanka Tharindu' : user?.username || 'Isanka Tharindu')
+
   return (
     <div className="aeux-dashboard-container">
-      {/* CLEAN DASHBOARD SUBHEADER (Eliminates duplicate Dashboard title) */}
-      <div className="aeux-dashboard-header">
-        <div>
-          <h2 className="aeux-dashboard-greeting">Studio Overview</h2>
-          <span className="aeux-dashboard-sub">House design plans, client billing &amp; payments</span>
-        </div>
-        <div className="aeux-dashboard-actions">
-          {onOpenCustomerLookup && (
+      {/* MOBILE UI MATCHING USER ATTACHMENT media_1794035886944_d0b6bf7b.png */}
+      <div className="mobile-dashboard-view mobile-only">
+        {/* Top Dark Hero Area with Emerald Glow */}
+        <div className="mobile-dark-hero">
+          <div className="mobile-hero-glow-aura" />
+
+          {/* Top User Greeting & Actions Row */}
+          <div className="mobile-hero-header">
+            <div className="mobile-hero-user" onClick={() => onNavigate('settings')} style={{ cursor: 'pointer' }}>
+              <div className="mobile-hero-avatar-box">
+                <span>{userName[0]?.toUpperCase() || 'I'}</span>
+              </div>
+              <div className="mobile-hero-greeting-col">
+                <span className="mobile-hero-greeting-sub">{greetingText}</span>
+                <strong className="mobile-hero-greeting-name">{userName}</strong>
+              </div>
+            </div>
+
+            <div className="mobile-hero-top-btns">
+              <button
+                className="mobile-hero-circle-btn"
+                onClick={() => onNavigate('settings')}
+                title="Notifications"
+                aria-label="Notifications"
+              >
+                <Bell size={18} />
+                <span className="hero-bell-dot" />
+              </button>
+              <button
+                className="mobile-hero-circle-btn"
+                onClick={onOpenMobileMenu}
+                title="Navigation Menu"
+                aria-label="Navigation Menu"
+              >
+                <Menu size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Balance Section */}
+          <div className="mobile-hero-balance-block">
+            <span className="mobile-hero-balance-label">Total Available Balance</span>
+            <div className="mobile-hero-balance-val">
+              <span className="mobile-hero-currency-tag">LKR</span>
+              <span className="mobile-hero-balance-number">
+                {stats?.totalRevenue
+                  ? Number(stats.totalRevenue).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  : '1,428,500.00'}
+              </span>
+            </div>
+          </div>
+
+          {/* 4 Action Buttons Grid (Mark Payment, Add Client, New Project, Search #) */}
+          <div className="mobile-hero-actions-grid">
             <button
-              className="aeux-round-icon-btn"
+              className="mobile-action-pill-btn"
+              onClick={() => onNavigate('payments')}
+              title="Mark Client Payment"
+            >
+              <div className="action-circle-icon send-emerald">
+                <Send size={17} />
+              </div>
+              <span className="action-circle-label">Mark Payment</span>
+            </button>
+
+            <button
+              className="mobile-action-pill-btn"
+              onClick={() => onNavigate('clients')}
+              title="Add New Client"
+            >
+              <div className="action-circle-icon receive-white">
+                <UserPlus size={17} />
+              </div>
+              <span className="action-circle-label">Add Client</span>
+            </button>
+
+            <button
+              className="mobile-action-pill-btn"
+              onClick={() => onNavigate('projects')}
+              title="Add New Project"
+            >
+              <div className="action-circle-icon swap-dark">
+                <FolderPlus size={17} />
+              </div>
+              <span className="action-circle-label">New Project</span>
+            </button>
+
+            <button
+              className="mobile-action-pill-btn"
               onClick={onOpenCustomerLookup}
               title="Search Customer Phone"
-              aria-label="Search Customer Phone"
             >
-              <Search size={18} />
+              <div className="action-circle-icon loan-dark">
+                <Phone size={16} />
+              </div>
+              <span className="action-circle-label">Search #</span>
             </button>
-          )}
-          <button
-            className="aeux-dark-pill-btn"
-            onClick={() => onNavigate('payments')}
-            title="Record New Payment"
-          >
-            <Plus size={16} strokeWidth={2.8} />
-            <span>+ Mark Payment</span>
-          </button>
+          </div>
+        </div>
+
+        {/* Bottom Sheet Drawer for Company Stats */}
+        <div className="mobile-drawer-sheet">
+          <div className="mobile-drawer-pill-handle" />
+
+          {/* Drawer Section Title */}
+          <div className="mobile-drawer-header">
+            <div className="mobile-drawer-badge">
+              <Layers size={13} color="#059669" />
+              <span>Company Stats</span>
+            </div>
+            <h4>Design &amp; Studio Operations</h4>
+          </div>
+
+          {/* 4 Colorful Stat Cards Grid */}
+          <div className="mobile-stats-2x2-grid">
+            <div className="mobile-stat-box box-emerald">
+              <span className="stat-box-label">Total Received</span>
+              <strong className="stat-box-value">{fmt(stats?.totalRevenue)}</strong>
+              <span className="stat-box-trend green">
+                <ArrowUpRight size={12} /> +18% last month
+              </span>
+            </div>
+
+            <div className="mobile-stat-box box-blue">
+              <span className="stat-box-label">Payment Progress</span>
+              <strong className="stat-box-value">{stats?.collectionRate || 100}%</strong>
+              <span className="stat-box-trend blue">
+                <CheckCircle2 size={12} /> All Cleared
+              </span>
+            </div>
+
+            <div className="mobile-stat-box box-purple">
+              <span className="stat-box-label">Total Plan Budget</span>
+              <strong className="stat-box-value">{fmt(stats?.totalBudget)}</strong>
+              <span className="stat-box-trend purple">
+                <FolderOpen size={12} /> Active Plans
+              </span>
+            </div>
+
+            <div className="mobile-stat-box box-amber">
+              <span className="stat-box-label">Active House Plans</span>
+              <strong className="stat-box-value">{stats?.activeCount || 1} Plans</strong>
+              <span className="stat-box-trend amber">
+                <CheckCircle2 size={12} /> In Progress
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ROW 1: 3 METRIC CARDS (Simple, clear words) */}
-      <div className="aeux-metrics-grid">
-        {/* Card 1: Total Received (Dark Hero Card) */}
-        <div className="aeux-card aeux-card-dark">
-          <div className="aeux-card-label">Total Received</div>
-          <div className="aeux-card-hero-val white">{fmt(stats?.totalRevenue)}</div>
-          <div className="aeux-card-footer">
-            <div className="aeux-trend-badge green">
-              <ArrowUpRight size={13} strokeWidth={2.5} />
-              <span>{Number(stats?.totalRevenue) > 0 ? '+18% from last month' : 'No payments yet'}</span>
-            </div>
-            {/* 5-bar emerald sparkline */}
-            <div className="aeux-mini-bars emerald">
-              <span style={{ height: '40%' }}></span>
-              <span style={{ height: '75%' }}></span>
-              <span style={{ height: '55%' }}></span>
-              <span style={{ height: '100%' }}></span>
-              <span style={{ height: '80%' }}></span>
-            </div>
+      {/* DESKTOP AEUXGLOBAL DASHBOARD VIEW */}
+      <div className="aeux-desktop-dashboard desktop-only">
+        {/* CLEAN DASHBOARD SUBHEADER (Eliminates duplicate Dashboard title) */}
+        <div className="aeux-dashboard-header">
+          <div>
+            <h2 className="aeux-dashboard-greeting">Studio Overview</h2>
+            <span className="aeux-dashboard-sub">House design plans, client billing &amp; payments</span>
+          </div>
+          <div className="aeux-dashboard-actions">
+            {onOpenCustomerLookup && (
+              <button
+                className="aeux-round-icon-btn"
+                onClick={onOpenCustomerLookup}
+                title="Search Customer Phone"
+                aria-label="Search Customer Phone"
+              >
+                <Search size={18} />
+              </button>
+            )}
+            <button
+              className="aeux-dark-pill-btn"
+              onClick={() => onNavigate('payments')}
+              title="Record New Payment"
+            >
+              <Plus size={16} strokeWidth={2.8} />
+              <span>Mark Payment</span>
+            </button>
           </div>
         </div>
 
-        {/* Card 2: Payment Progress (Clean White Card) */}
-        <div className="aeux-card aeux-card-white">
-          <div className="aeux-card-label">Payment Progress</div>
-          <div className="aeux-card-hero-val dark">
-            {stats?.collectionRate || 100}%
-            <span className="aeux-val-sub">Cleared</span>
-          </div>
-          <div className="aeux-card-footer">
-            <div className={`aeux-trend-badge ${Number(stats?.totalOutstanding) > 0 ? 'red' : 'green'}`}>
-              {Number(stats?.totalOutstanding) > 0 ? (
-                <>
-                  <ArrowDownRight size={13} strokeWidth={2.5} />
-                  <span>{fmt(stats?.totalOutstanding)} Due</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 size={13} strokeWidth={2.5} />
-                  <span>All Cleared</span>
-                </>
-              )}
-            </div>
-            {/* 5-bar status sparkline */}
-            <div className="aeux-mini-bars coral">
-              <span style={{ height: '50%' }}></span>
-              <span style={{ height: '35%' }}></span>
-              <span style={{ height: '65%' }}></span>
-              <span style={{ height: '85%' }}></span>
-              <span style={{ height: '45%' }}></span>
+        {/* ROW 1: 3 METRIC CARDS (Colorful, Simple, clear words) */}
+        <div className="aeux-metrics-grid">
+          {/* Card 1: Total Received (Dark Hero Card with Emerald Glow) */}
+          <div className="aeux-card aeux-card-dark aeux-card-emerald">
+            <div className="aeux-card-label">Total Received</div>
+            <div className="aeux-card-hero-val white">{fmt(stats?.totalRevenue)}</div>
+            <div className="aeux-card-footer">
+              <div className="aeux-trend-badge green">
+                <ArrowUpRight size={13} strokeWidth={2.5} />
+                <span>{Number(stats?.totalRevenue) > 0 ? '+18% from last month' : 'No payments yet'}</span>
+              </div>
+              {/* 5-bar emerald sparkline */}
+              <div className="aeux-mini-bars emerald">
+                <span style={{ height: '40%' }}></span>
+                <span style={{ height: '75%' }}></span>
+                <span style={{ height: '55%' }}></span>
+                <span style={{ height: '100%' }}></span>
+                <span style={{ height: '80%' }}></span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Card 3: Project Budget (Clean White Card) */}
-        <div className="aeux-card aeux-card-white">
-          <div className="aeux-card-label">Total Project Budget</div>
-          <div className="aeux-card-hero-val dark">{fmt(stats?.totalBudget)}</div>
-          <div className="aeux-card-footer">
-            <div className="aeux-trend-badge green">
-              <ArrowUpRight size={13} strokeWidth={2.5} />
-              <span>{stats?.activeCount || 1} Active Plan</span>
+          {/* Card 2: Payment Progress (Vibrant Azure / Blue Theme) */}
+          <div className="aeux-card aeux-card-white aeux-card-blue">
+            <div className="aeux-card-label" style={{ color: '#2563eb' }}>Payment Progress</div>
+            <div className="aeux-card-hero-val dark">
+              {stats?.collectionRate || 100}%
+              <span className="aeux-val-sub">Cleared</span>
             </div>
-            {/* 5-bar emerald sparkline */}
-            <div className="aeux-mini-bars emerald">
-              <span style={{ height: '35%' }}></span>
-              <span style={{ height: '60%' }}></span>
-              <span style={{ height: '45%' }}></span>
-              <span style={{ height: '90%' }}></span>
-              <span style={{ height: '70%' }}></span>
+            <div className="aeux-card-footer">
+              <div className={`aeux-trend-badge ${Number(stats?.totalOutstanding) > 0 ? 'red' : 'blue'}`}>
+                {Number(stats?.totalOutstanding) > 0 ? (
+                  <>
+                    <ArrowDownRight size={13} strokeWidth={2.5} />
+                    <span>{fmt(stats?.totalOutstanding)} Due</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={13} strokeWidth={2.5} />
+                    <span>All Cleared</span>
+                  </>
+                )}
+              </div>
+              {/* 5-bar blue sparkline */}
+              <div className="aeux-mini-bars blue">
+                <span style={{ height: '50%' }}></span>
+                <span style={{ height: '35%' }}></span>
+                <span style={{ height: '65%' }}></span>
+                <span style={{ height: '85%' }}></span>
+                <span style={{ height: '45%' }}></span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Project Budget (Vibrant Violet / Purple Theme) */}
+          <div className="aeux-card aeux-card-white aeux-card-purple">
+            <div className="aeux-card-label" style={{ color: '#7c3aed' }}>Total Project Budget</div>
+            <div className="aeux-card-hero-val dark">{fmt(stats?.totalBudget)}</div>
+            <div className="aeux-card-footer">
+              <div className="aeux-trend-badge purple">
+                <ArrowUpRight size={13} strokeWidth={2.5} />
+                <span>{stats?.activeCount || 1} Active Plan</span>
+              </div>
+              {/* 5-bar purple sparkline */}
+              <div className="aeux-mini-bars purple">
+                <span style={{ height: '35%' }}></span>
+                <span style={{ height: '60%' }}></span>
+                <span style={{ height: '45%' }}></span>
+                <span style={{ height: '90%' }}></span>
+                <span style={{ height: '70%' }}></span>
+              </div>
             </div>
           </div>
         </div>
@@ -366,9 +529,9 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
             <svg width="100%" height="100%" viewBox="0 0 700 220" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="aeuxLineFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#00d293" stopOpacity="0.28" />
-                  <stop offset="75%" stopColor="#00d293" stopOpacity="0.05" />
-                  <stop offset="100%" stopColor="#00d293" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="#059669" stopOpacity="0.28" />
+                  <stop offset="75%" stopColor="#059669" stopOpacity="0.05" />
+                  <stop offset="100%" stopColor="#059669" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
 
@@ -392,7 +555,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
                 y1="22"
                 x2={currentPoint.x}
                 y2="192"
-                stroke="#00d293"
+                stroke="#059669"
                 strokeWidth="1.5"
                 strokeDasharray="4 4"
                 opacity="0.85"
@@ -409,9 +572,9 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
               <path
                 d={chartData.path}
                 fill="none"
-                stroke="#00d293"
+                stroke="#059669"
                 strokeWidth="7"
-                opacity="0.22"
+                opacity="0.25"
                 strokeLinecap="round"
               />
 
@@ -419,7 +582,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
               <path
                 d={chartData.path}
                 fill="none"
-                stroke="#00d293"
+                stroke="#059669"
                 strokeWidth="3.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -433,7 +596,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
                   cy={pt.y}
                   r="4.5"
                   fill="#ffffff"
-                  stroke="#00d293"
+                  stroke="#059669"
                   strokeWidth="2.5"
                   style={{ cursor: 'pointer' }}
                   onClick={() => setActivePointIndex(idx)}
@@ -445,7 +608,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
                 cx={currentPoint.x}
                 cy={currentPoint.y}
                 r="13"
-                fill="#00d293"
+                fill="#059669"
                 opacity="0.25"
                 style={{ transition: 'cx 0.15s ease, cy 0.15s ease' }}
               />
@@ -453,7 +616,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
                 cx={currentPoint.x}
                 cy={currentPoint.y}
                 r="6.5"
-                fill="#00d293"
+                fill="#059669"
                 stroke="#ffffff"
                 strokeWidth="2.5"
                 style={{ transition: 'cx 0.15s ease, cy 0.15s ease' }}
@@ -516,8 +679,8 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
 
             {/* Sub-item 1: House Plans */}
             <div className="aeux-mint-subitem">
-              <div className="aeux-mint-icon-circle">
-                <FolderOpen size={17} color="#00d293" />
+              <div className="aeux-mint-icon-circle blue-accent">
+                <FolderOpen size={17} color="#2563eb" />
               </div>
               <div>
                 <div className="aeux-mint-subitem-title">House Plans</div>
@@ -529,8 +692,8 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
 
             {/* Sub-item 2: Client Payments */}
             <div className="aeux-mint-subitem">
-              <div className="aeux-mint-icon-circle">
-                <CreditCard size={17} color="#00d293" />
+              <div className="aeux-mint-icon-circle emerald-accent">
+                <CreditCard size={17} color="#059669" />
               </div>
               <div>
                 <div className="aeux-mint-subitem-title">Client Payments</div>

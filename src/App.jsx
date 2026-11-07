@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard'
 import Clients from './components/Clients'
 import Projects from './components/Projects'
 import Payments from './components/Payments'
+import Settings from './components/Settings'
 import InstallPrompt from './components/InstallPrompt'
 import CustomerLookupModal from './components/CustomerLookupModal'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -27,6 +28,7 @@ const PAGE_TITLES = {
   clients: 'Customers',
   projects: 'Projects',
   payments: 'Payments',
+  settings: 'Studio Settings',
 }
 
 function App() {
@@ -121,6 +123,8 @@ function App() {
             key={refreshKey}
             onNavigate={navigateTo}
             onOpenCustomerLookup={() => setCustomerLookupOpen(true)}
+            user={user}
+            onOpenMobileMenu={() => setMobileMenuOpen(true)}
           />
         )
       case 'clients':
@@ -129,12 +133,25 @@ function App() {
         return <Projects key={refreshKey} onNavigate={navigateTo} />
       case 'payments':
         return <Payments key={refreshKey} />
+      case 'settings':
+        return (
+          <Settings
+            key={refreshKey}
+            user={user}
+            onLogout={handleLogout}
+            theme={theme}
+            onToggleTheme={toggleTheme}
+            onNavigate={navigateTo}
+          />
+        )
       default:
         return (
           <Dashboard
             key={refreshKey}
             onNavigate={navigateTo}
             onOpenCustomerLookup={() => setCustomerLookupOpen(true)}
+            user={user}
+            onOpenMobileMenu={() => setMobileMenuOpen(true)}
           />
         )
     }
@@ -173,7 +190,7 @@ function App() {
         />
 
         {/* Clean, Mobile-Optimized Top Bar */}
-        <header className="top-bar">
+        <header className={`top-bar ${page === 'dashboard' ? 'mobile-top-bar-hidden' : ''}`}>
           <div className="top-bar-left">
             {/* Mobile Hamburger Drawer Trigger */}
             <button
@@ -260,7 +277,7 @@ function App() {
             </button>
 
             {/* Admin Avatar Chip */}
-            <div className="user-profile-chip" onClick={() => navigateTo('dashboard')}>
+            <div className="user-profile-chip" onClick={() => navigateTo('settings')} title="View Studio Settings & Profile">
               <div className="chip-avatar">
                 {user?.username?.[0]?.toUpperCase() || 'A'}
               </div>
