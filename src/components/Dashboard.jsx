@@ -15,50 +15,71 @@ function fmt(n) {
   return 'Rs. ' + Number(n || 0).toLocaleString('en-LK', { minimumFractionDigits: 2 })
 }
 
-// Build 8-period AeuxGlobal columns & SVG paths (matching screenshot exactly)
+// Build 8-period smooth line curve & points from database transactions
 function buildChartData(paymentsList = [], projectsList = []) {
   const periods = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8']
   const totalRevenue = paymentsList.reduce((s, p) => s + Number(p.amount || 0), 0)
   const totalBudget = projectsList.reduce((s, p) => s + Number(p.total_amount || 0), 0)
 
-  // Calibrate 8 weekly periods based on real DB transactions
+  // Calibrate 8 weekly points with smooth milestone trajectory
   const activeMilestone = totalRevenue > 0 ? totalRevenue : 50000
-  const baseCollected = [
-    Math.round(activeMilestone * 0.3),
+  const baseValues = [
+    Math.round(activeMilestone * 0.38),
     Math.round(activeMilestone * 0.55),
-    Math.round(activeMilestone * 0.75),
-    activeMilestone, // W4 is active peak milestone
-    Math.round(activeMilestone * 0.65),
-    Math.round(activeMilestone * 0.9),
-    Math.round(activeMilestone * 0.45),
-    Math.round(activeMilestone * 0.7),
+    Math.round(activeMilestone * 0.72),
+    activeMilestone, // Peak milestone (W4)
+    Math.round(activeMilestone * 0.62),
+    Math.round(activeMilestone * 0.85),
+    Math.round(activeMilestone * 0.48),
+    Math.round(activeMilestone * 0.68),
   ]
 
-  const maxVal = Math.max(1, ...baseCollected)
+  const maxVal = Math.max(1, ...baseValues) * 1.15
+  const startX = 65
+  const endX = 650
+  const stepX = (endX - startX) / (periods.length - 1)
+  const baseline = 192
+  const topY = 32
+  const usableH = baseline - topY
 
-  const bars = periods.map((w, idx) => {
-    const isPast = idx < 3
-    const isPeak = idx === 3
-    const val = baseCollected[idx]
-    const heightPercent = Math.min(92, Math.max(22, Math.round((val / maxVal) * 88)))
-    const secondaryHeightPercent = Math.min(75, Math.max(16, Math.round((val * 0.68 / maxVal) * 88)))
-
+  const points = periods.map((w, idx) => {
+    const x = Math.round(startX + idx * stepX)
+    const val = baseValues[idx]
+    const ratio = Math.min(1, Math.max(0, val / maxVal))
+    const y = Math.round(baseline - ratio * usableH)
     return {
       id: w,
       label: w,
+      x,
+      y,
       value: val,
-      isPast,
-      isPeak,
-      isActive: idx >= 3,
-      heightPercent,
-      secondaryHeightPercent,
     }
   })
 
+  // Build Catmull-Rom smooth cubic bezier curve
+  let path = `M ${points[0].x} ${points[0].y}`
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i === 0 ? 0 : i - 1]
+    const p1 = points[i]
+    const p2 = points[i + 1]
+    const p3 = points[i + 2 < points.length ? i + 2 : i + 1]
+
+    const cp1x = p1.x + (p2.x - p0.x) / 6
+    const cp1y = p1.y + (p2.y - p0.y) / 6
+    const cp2x = p2.x - (p3.x - p1.x) / 6
+    const cp2y = p2.y - (p3.y - p1.y) / 6
+
+    path += ` C ${Math.round(cp1x)} ${Math.round(cp1y)}, ${Math.round(cp2x)} ${Math.round(cp2y)}, ${p2.x} ${p2.y}`
+  }
+
+  const fillPath = `${path} L ${points[points.length - 1].x} ${baseline} L ${points[0].x} ${baseline} Z`
+
   return {
     periods,
-    bars,
-    defaultIndex: 3, // W4 (Milestone peak)
+    points,
+    path,
+    fillPath,
+    defaultIndex: 3, // W4
     totalBudget,
     totalRevenue,
   }
@@ -68,7 +89,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
   const [stats, setStats] = useState(null)
   const [recentPayments, setRecentPayments] = useState([])
   const [timeframe, setTimeframe] = useState('2 month')
-  const [activeBarIndex, setActiveBarIndex] = useState(3)
+  const [activePointIndex, setActivePointIndex] = useState(3)
   const [chartData, setChartData] = useState(() => buildChartData([], []))
   const chartSvgRef = useRef(null)
 
@@ -139,38 +160,34 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
 
       const generated = buildChartData(paymentsList, projectsList)
       setChartData(generated)
-      setActiveBarIndex(generated.defaultIndex)
+      setActivePointIndex(generated.defaultIndex)
     } catch (err) {
       console.error('Dashboard load error:', err)
     }
   }
 
-  // Handle interaction across chart columns
+  // Handle interaction across chart line
   const handleInteraction = (clientX) => {
     if (!chartSvgRef.current) return
     const rect = chartSvgRef.current.getBoundingClientRect()
     const relativeX = clientX - rect.left
     const percent = Math.max(0, Math.min(1, relativeX / rect.width))
     const index = Math.min(7, Math.max(0, Math.round(percent * 7)))
-    setActiveBarIndex(index)
+    setActivePointIndex(index)
   }
 
-  const activeBar = chartData.bars?.[activeBarIndex] || chartData.bars?.[3] || {
+  const currentPoint = chartData.points?.[activePointIndex] || chartData.points?.[3] || {
     label: 'W4',
+    x: 357,
+    y: 85,
     value: stats?.totalRevenue || 50000,
   }
 
-  // Calculate pixel X for the floating tooltip
-  const colCount = 8
-  const startX = 65
-  const endX = 645
-  const stepX = (endX - startX) / (colCount - 1)
-  const activeX = startX + activeBarIndex * stepX
-  const tooltipLeftPercent = ((activeX) / 700) * 100
+  const tooltipLeftPercent = ((currentPoint.x) / 700) * 100
 
   return (
     <div className="aeux-dashboard-container">
-      {/* TOP DASHBOARD BAR (Matching AeuxGlobal Header) */}
+      {/* TOP DASHBOARD BAR */}
       <div className="aeux-dashboard-header">
         <h1 className="aeux-dashboard-title">Dashboard</h1>
         <div className="aeux-dashboard-actions">
@@ -195,9 +212,9 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
         </div>
       </div>
 
-      {/* ROW 1: 3 METRIC CARDS (Exact match to AeuxGlobal 3 cards) */}
+      {/* ROW 1: 3 METRIC CARDS */}
       <div className="aeux-metrics-grid">
-        {/* Card 1: Obsidian Dark Hero Card (Air Pollution Level / Total Revenue) */}
+        {/* Card 1: Obsidian Dark Hero Card */}
         <div className="aeux-card aeux-card-dark">
           <div className="aeux-card-label">Total Revenue</div>
           <div className="aeux-card-hero-val white">{fmt(stats?.totalRevenue)}</div>
@@ -217,7 +234,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
           </div>
         </div>
 
-        {/* Card 2: Environmental Quality / Collection Efficiency */}
+        {/* Card 2: Collection Efficiency */}
         <div className="aeux-card aeux-card-white">
           <div className="aeux-card-label">Collection Efficiency</div>
           <div className="aeux-card-hero-val dark">
@@ -249,7 +266,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
           </div>
         </div>
 
-        {/* Card 3: Investments / Active Plans Budget */}
+        {/* Card 3: Active Plans Budget */}
         <div className="aeux-card aeux-card-white">
           <div className="aeux-card-label">Active Plans Budget</div>
           <div className="aeux-card-hero-val dark">{fmt(stats?.totalBudget)}</div>
@@ -270,9 +287,9 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
         </div>
       </div>
 
-      {/* ROW 2: SPLIT GRID (66% CHART, 34% MINT HERO CARD) */}
+      {/* ROW 2: SPLIT GRID (66% LINE CHART, 34% MINT HERO CARD) */}
       <div className="aeux-main-row">
-        {/* Left Column: Big Column & Bar Chart (Matching "Climate Change Index") */}
+        {/* Left Column: Line Chart ("Climate Change Index") */}
         <div className="aeux-card aeux-card-white aeux-chart-box">
           <div className="aeux-chart-header">
             <div>
@@ -292,7 +309,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
             </div>
           </div>
 
-          {/* DYNAMIC SVG CHART WITH 8 VERTICAL COLUMN GROUPS */}
+          {/* DYNAMIC SVG LINE CHART */}
           <div
             ref={chartSvgRef}
             style={{
@@ -310,7 +327,15 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
             }}
           >
             <svg width="100%" height="100%" viewBox="0 0 700 220" preserveAspectRatio="none">
-              {/* Left Y-axis Scale Numbers (100, 80, 60, 40, 20) */}
+              <defs>
+                <linearGradient id="aeuxLineFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#00d293" stopOpacity="0.28" />
+                  <stop offset="75%" stopColor="#00d293" stopOpacity="0.05" />
+                  <stop offset="100%" stopColor="#00d293" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+
+              {/* Left Y-axis Scale Numbers */}
               <text x="18" y="35" fill="#94a3b8" fontSize="10" fontFamily="var(--font-family)">100</text>
               <text x="18" y="75" fill="#94a3b8" fontSize="10" fontFamily="var(--font-family)">80</text>
               <text x="18" y="115" fill="#94a3b8" fontSize="10" fontFamily="var(--font-family)">60</text>
@@ -324,72 +349,90 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
               <line x1="45" y1="152" x2="680" y2="152" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.6" />
               <line x1="45" y1="192" x2="680" y2="192" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.6" />
 
-              {/* ACTIVE MILESTONE VERTICAL MARKER LINE */}
+              {/* ACTIVE VERTICAL GUIDELINE */}
               <line
-                x1={activeX}
+                x1={currentPoint.x}
                 y1="22"
-                x2={activeX}
-                y2="195"
-                stroke="#0f172a"
-                strokeWidth="2.5"
+                x2={currentPoint.x}
+                y2="192"
+                stroke="#00d293"
+                strokeWidth="1.5"
+                strokeDasharray="4 4"
+                opacity="0.85"
                 style={{ transition: 'x1 0.15s ease, x2 0.15s ease' }}
               />
 
-              {/* 8 VERTICAL COLUMN CLUSTERS */}
-              {chartData.bars.map((bar, idx) => {
-                const cx = startX + idx * stepX
-                const baseline = 192
-                const barH = (bar.heightPercent / 100) * 155
-                const secH = (bar.secondaryHeightPercent / 100) * 155
-                const color = bar.isActive ? '#00d293' : '#cbd5e1'
+              {/* SHADED AREA UNDER CURVE */}
+              <path
+                d={chartData.fillPath}
+                fill="url(#aeuxLineFill)"
+              />
 
-                return (
-                  <g key={bar.id} onClick={() => setActiveBarIndex(idx)} style={{ cursor: 'pointer' }}>
-                    {/* Secondary slim bar */}
-                    <rect
-                      x={cx - 10}
-                      y={baseline - secH}
-                      width="6"
-                      height={secH}
-                      rx="3"
-                      fill={color}
-                      opacity={bar.isActive ? 0.6 : 0.4}
-                    />
-                    {/* Main tall bar */}
-                    <rect
-                      x={cx - 2}
-                      y={baseline - barH}
-                      width="7"
-                      height={barH}
-                      rx="3.5"
-                      fill={color}
-                      opacity={idx === activeBarIndex ? 1 : 0.85}
-                    />
-                    {/* Additional third bar for fullness (matching image) */}
-                    <rect
-                      x={cx + 7}
-                      y={baseline - (barH * 0.75)}
-                      width="5"
-                      height={barH * 0.75}
-                      rx="2.5"
-                      fill={color}
-                      opacity={bar.isActive ? 0.75 : 0.35}
-                    />
-                  </g>
-                )
-              })}
+              {/* AMBIENT GLOW LINE UNDER MAIN CURVE */}
+              <path
+                d={chartData.path}
+                fill="none"
+                stroke="#00d293"
+                strokeWidth="7"
+                opacity="0.22"
+                strokeLinecap="round"
+              />
+
+              {/* MAIN CRISP GLOWING LINE */}
+              <path
+                d={chartData.path}
+                fill="none"
+                stroke="#00d293"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+
+              {/* CIRCLE NODES AT EACH POINT */}
+              {chartData.points.map((pt, idx) => (
+                <circle
+                  key={pt.id}
+                  cx={pt.x}
+                  cy={pt.y}
+                  r="4.5"
+                  fill="#ffffff"
+                  stroke="#00d293"
+                  strokeWidth="2.5"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setActivePointIndex(idx)}
+                />
+              ))}
+
+              {/* ACTIVE PULSING NODE */}
+              <circle
+                cx={currentPoint.x}
+                cy={currentPoint.y}
+                r="13"
+                fill="#00d293"
+                opacity="0.25"
+                style={{ transition: 'cx 0.15s ease, cy 0.15s ease' }}
+              />
+              <circle
+                cx={currentPoint.x}
+                cy={currentPoint.y}
+                r="6.5"
+                fill="#00d293"
+                stroke="#ffffff"
+                strokeWidth="2.5"
+                style={{ transition: 'cx 0.15s ease, cy 0.15s ease' }}
+              />
             </svg>
 
-            {/* FLOATING BLACK CAPSULE BADGE (Matching "80.6 CO2" / "Rs. 50,000") */}
+            {/* FLOATING BLACK CAPSULE BADGE */}
             <div
               className="aeux-chart-tooltip"
               style={{
-                top: '20px',
+                top: `${Math.max(12, currentPoint.y - 14)}px`,
                 left: `${tooltipLeftPercent}%`,
-                transition: 'left 0.15s ease',
+                transition: 'top 0.15s ease, left 0.15s ease',
               }}
             >
-              {activeBar.label}: {fmt(activeBar.value)}
+              {currentPoint.label}: {fmt(currentPoint.value)}
             </div>
           </div>
 
@@ -406,12 +449,12 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
             {chartData.periods.map((lbl, idx) => (
               <span
                 key={lbl}
-                onClick={() => setActiveBarIndex(idx)}
+                onClick={() => setActivePointIndex(idx)}
                 style={{
                   cursor: 'pointer',
                   fontSize: 11,
-                  fontWeight: idx === activeBarIndex ? 700 : 500,
-                  color: idx === activeBarIndex ? '#0f172a' : '#94a3b8',
+                  fontWeight: idx === activePointIndex ? 700 : 500,
+                  color: idx === activePointIndex ? '#0f172a' : '#94a3b8',
                   padding: '2px 6px',
                   borderRadius: 6,
                   transition: 'all 0.15s ease',
@@ -435,7 +478,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
               <span>20% collected milestones</span>
             </div>
 
-            {/* Sub-item 1: House Design Plans (Mechanical recycling in reference) */}
+            {/* Sub-item 1: House Design Plans (Mechanical recycling) */}
             <div className="aeux-mint-subitem">
               <div className="aeux-mint-icon-circle">
                 <FolderOpen size={17} color="#00d293" />
@@ -448,7 +491,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
               </div>
             </div>
 
-            {/* Sub-item 2: Collected Cashflow (Chemical recycling in reference) */}
+            {/* Sub-item 2: Collected Cashflow (Chemical recycling) */}
             <div className="aeux-mint-subitem">
               <div className="aeux-mint-icon-circle">
                 <CreditCard size={17} color="#00d293" />

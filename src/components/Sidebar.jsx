@@ -8,8 +8,6 @@ import {
   ArrowRight,
   FileSpreadsheet,
   X,
-  PanelLeftClose,
-  PanelLeftOpen,
   Sparkles,
   ChevronDown,
   Search,
@@ -31,7 +29,6 @@ export default function Sidebar({
   isOpen = false,
   onClose,
   isCollapsed = false,
-  onToggleCollapse,
   onOpenCustomerLookup,
 }) {
   return (
@@ -59,18 +56,6 @@ export default function Sidebar({
         </div>
 
         <div className="sidebar-header-actions">
-          {/* Desktop Collapse / Expand Toggle Button */}
-          {onToggleCollapse && (
-            <button
-              onClick={onToggleCollapse}
-              className="sidebar-collapse-btn desktop-only-btn"
-              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-            </button>
-          )}
-
           {/* Close Button on Mobile Drawer */}
           {onClose && (
             <button
