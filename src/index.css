@@ -997,11 +997,19 @@ button, input, select, textarea, table, h1, h2, h3, h4, h5, h6, span, p, label {
   padding: 4px 0 8px;
 }
 
-.aeux-dashboard-title {
-  font-size: 28px;
+.aeux-dashboard-greeting {
+  font-size: 24px;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -0.5px;
+  letter-spacing: -0.4px;
+  margin: 0;
+}
+
+.aeux-dashboard-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: block;
 }
 
 .aeux-dashboard-actions {
@@ -1243,11 +1251,12 @@ button, input, select, textarea, table, h1, h2, h3, h4, h5, h6, span, p, label {
 }
 
 .aeux-mint-hero-val {
-  font-size: 38px;
+  font-size: 28px;
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.5px;
-  line-height: 1.1;
+  line-height: 1.2;
+  word-break: break-word;
 }
 
 [data-theme="dark"] .aeux-mint-hero-val {

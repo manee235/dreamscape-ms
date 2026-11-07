@@ -15,29 +15,49 @@ function fmt(n) {
   return 'Rs. ' + Number(n || 0).toLocaleString('en-LK', { minimumFractionDigits: 2 })
 }
 
-// Build 8-period smooth line curve & points from database transactions
-function buildChartData(paymentsList = [], projectsList = []) {
-  const periods = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8']
+// Build smooth line curve & points from database transactions
+function buildChartData(paymentsList = [], projectsList = [], timeframe = 'Week') {
   const totalRevenue = paymentsList.reduce((s, p) => s + Number(p.amount || 0), 0)
   const totalBudget = projectsList.reduce((s, p) => s + Number(p.total_amount || 0), 0)
-
-  // Calibrate 8 weekly points with smooth milestone trajectory
   const activeMilestone = totalRevenue > 0 ? totalRevenue : 50000
-  const baseValues = [
-    Math.round(activeMilestone * 0.38),
-    Math.round(activeMilestone * 0.55),
-    Math.round(activeMilestone * 0.72),
-    activeMilestone, // Peak milestone (W4)
-    Math.round(activeMilestone * 0.62),
-    Math.round(activeMilestone * 0.85),
-    Math.round(activeMilestone * 0.48),
-    Math.round(activeMilestone * 0.68),
+
+  let periods = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  let baseValues = [
+    Math.round(activeMilestone * 0.3),
+    Math.round(activeMilestone * 0.5),
+    Math.round(activeMilestone * 0.7),
+    activeMilestone, // Active peak
+    Math.round(activeMilestone * 0.6),
+    Math.round(activeMilestone * 0.8),
+    Math.round(activeMilestone * 0.45),
   ]
+
+  if (timeframe === 'Month') {
+    periods = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug']
+    baseValues = [
+      Math.round(activeMilestone * 0.35),
+      Math.round(activeMilestone * 0.55),
+      Math.round(activeMilestone * 0.75),
+      activeMilestone,
+      Math.round(activeMilestone * 0.65),
+      Math.round(activeMilestone * 0.85),
+      Math.round(activeMilestone * 0.5),
+      Math.round(activeMilestone * 0.7),
+    ]
+  } else if (timeframe === 'Year') {
+    periods = ['2023', '2024', '2025', '2026']
+    baseValues = [
+      Math.round(activeMilestone * 0.4),
+      Math.round(activeMilestone * 0.7),
+      Math.round(activeMilestone * 0.9),
+      activeMilestone,
+    ]
+  }
 
   const maxVal = Math.max(1, ...baseValues) * 1.15
   const startX = 65
   const endX = 650
-  const stepX = (endX - startX) / (periods.length - 1)
+  const stepX = (endX - startX) / (periods.length - 1 || 1)
   const baseline = 192
   const topY = 32
   const usableH = baseline - topY
@@ -79,7 +99,7 @@ function buildChartData(paymentsList = [], projectsList = []) {
     points,
     path,
     fillPath,
-    defaultIndex: 3, // W4
+    defaultIndex: Math.min(3, periods.length - 1),
     totalBudget,
     totalRevenue,
   }
@@ -88,9 +108,11 @@ function buildChartData(paymentsList = [], projectsList = []) {
 export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
   const [stats, setStats] = useState(null)
   const [recentPayments, setRecentPayments] = useState([])
-  const [timeframe, setTimeframe] = useState('2 month')
+  const [timeframe, setTimeframe] = useState('Week')
   const [activePointIndex, setActivePointIndex] = useState(3)
-  const [chartData, setChartData] = useState(() => buildChartData([], []))
+  const [rawPaymentsList, setRawPaymentsList] = useState([])
+  const [rawProjectsList, setRawProjectsList] = useState([])
+  const [chartData, setChartData] = useState(() => buildChartData([], [], 'Week'))
   const chartSvgRef = useRef(null)
 
   const fetchData = async () => {
@@ -105,6 +127,9 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
       const projectsList = projectsRes.data || []
       const paymentsList = paymentsRes.data || []
 
+      setRawPaymentsList(paymentsList)
+      setRawProjectsList(projectsList)
+
       const clientMap = new Map()
       clientsList.forEach((c) => clientMap.set(c.id, c.name))
 
@@ -117,7 +142,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
       const activeProjects = projectsList.filter((p) => p.status === 'Active')
       const completedProjects = projectsList.filter((p) => p.status === 'Completed')
 
-      const collectionRate = totalBudget > 0 ? Math.round((totalRevenue / totalBudget) * 100) : 100
+      const collectionRate = totalBudget > 0 ? Math.min(100, Math.round((totalRevenue / totalBudget) * 100)) : 100
       const avgContract = projectsList.length > 0 ? Math.round(totalBudget / projectsList.length) : 50000
 
       setStats({
@@ -143,7 +168,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
       })
       setRecentPayments(recent)
 
-      const generated = buildChartData(paymentsList, projectsList)
+      const generated = buildChartData(paymentsList, projectsList, timeframe)
       setChartData(generated)
       setActivePointIndex(generated.defaultIndex)
     } catch (err) {
@@ -166,18 +191,27 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
     }
   }, [])
 
+  // Switch timeframe tab
+  const handleTimeframeChange = (newTf) => {
+    setTimeframe(newTf)
+    const generated = buildChartData(rawPaymentsList, rawProjectsList, newTf)
+    setChartData(generated)
+    setActivePointIndex(generated.defaultIndex)
+  }
+
   // Handle interaction across chart line
   const handleInteraction = (clientX) => {
     if (!chartSvgRef.current) return
     const rect = chartSvgRef.current.getBoundingClientRect()
     const relativeX = clientX - rect.left
     const percent = Math.max(0, Math.min(1, relativeX / rect.width))
-    const index = Math.min(7, Math.max(0, Math.round(percent * 7)))
+    const count = chartData.points?.length || 7
+    const index = Math.min(count - 1, Math.max(0, Math.round(percent * (count - 1))))
     setActivePointIndex(index)
   }
 
-  const currentPoint = chartData.points?.[activePointIndex] || chartData.points?.[3] || {
-    label: 'W4',
+  const currentPoint = chartData.points?.[activePointIndex] || chartData.points?.[0] || {
+    label: 'Today',
     x: 357,
     y: 85,
     value: stats?.totalRevenue || 50000,
@@ -187,16 +221,19 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
 
   return (
     <div className="aeux-dashboard-container">
-      {/* TOP DASHBOARD BAR */}
+      {/* CLEAN DASHBOARD SUBHEADER (Eliminates duplicate Dashboard title) */}
       <div className="aeux-dashboard-header">
-        <h1 className="aeux-dashboard-title">Dashboard</h1>
+        <div>
+          <h2 className="aeux-dashboard-greeting">Studio Overview</h2>
+          <span className="aeux-dashboard-sub">House design plans, client billing &amp; payments</span>
+        </div>
         <div className="aeux-dashboard-actions">
           {onOpenCustomerLookup && (
             <button
               className="aeux-round-icon-btn"
               onClick={onOpenCustomerLookup}
-              title="Search Customer by Mobile Number"
-              aria-label="Search Customer by Mobile Number"
+              title="Search Customer Phone"
+              aria-label="Search Customer Phone"
             >
               <Search size={18} />
             </button>
@@ -204,26 +241,26 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
           <button
             className="aeux-dark-pill-btn"
             onClick={() => onNavigate('payments')}
-            title="Mark Client Payment"
+            title="Record New Payment"
           >
             <Plus size={16} strokeWidth={2.8} />
-            <span>Mark Client Payment</span>
+            <span>+ Mark Payment</span>
           </button>
         </div>
       </div>
 
-      {/* ROW 1: 3 METRIC CARDS */}
+      {/* ROW 1: 3 METRIC CARDS (Simple, clear words) */}
       <div className="aeux-metrics-grid">
-        {/* Card 1: Obsidian Dark Hero Card */}
+        {/* Card 1: Total Received (Dark Hero Card) */}
         <div className="aeux-card aeux-card-dark">
-          <div className="aeux-card-label">Total Revenue</div>
+          <div className="aeux-card-label">Total Received</div>
           <div className="aeux-card-hero-val white">{fmt(stats?.totalRevenue)}</div>
           <div className="aeux-card-footer">
             <div className="aeux-trend-badge green">
               <ArrowUpRight size={13} strokeWidth={2.5} />
-              <span>{Number(stats?.totalRevenue) > 0 ? '+18.4% than last month' : '0.0% than last month'}</span>
+              <span>{Number(stats?.totalRevenue) > 0 ? '+18% from last month' : 'No payments yet'}</span>
             </div>
-            {/* 5-bar emerald mini chart graphic */}
+            {/* 5-bar emerald sparkline */}
             <div className="aeux-mini-bars emerald">
               <span style={{ height: '40%' }}></span>
               <span style={{ height: '75%' }}></span>
@@ -234,28 +271,28 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
           </div>
         </div>
 
-        {/* Card 2: Collection Efficiency */}
+        {/* Card 2: Payment Progress (Clean White Card) */}
         <div className="aeux-card aeux-card-white">
-          <div className="aeux-card-label">Collection Efficiency</div>
+          <div className="aeux-card-label">Payment Progress</div>
           <div className="aeux-card-hero-val dark">
-            {stats?.collectionRate || 100}
-            <span className="aeux-val-sub">/100%</span>
+            {stats?.collectionRate || 100}%
+            <span className="aeux-val-sub">Cleared</span>
           </div>
           <div className="aeux-card-footer">
             <div className={`aeux-trend-badge ${Number(stats?.totalOutstanding) > 0 ? 'red' : 'green'}`}>
               {Number(stats?.totalOutstanding) > 0 ? (
                 <>
                   <ArrowDownRight size={13} strokeWidth={2.5} />
-                  <span>Pending dues</span>
+                  <span>{fmt(stats?.totalOutstanding)} Due</span>
                 </>
               ) : (
                 <>
                   <CheckCircle2 size={13} strokeWidth={2.5} />
-                  <span>All cleared</span>
+                  <span>All Cleared</span>
                 </>
               )}
             </div>
-            {/* 5-bar coral/grey mini chart graphic */}
+            {/* 5-bar status sparkline */}
             <div className="aeux-mini-bars coral">
               <span style={{ height: '50%' }}></span>
               <span style={{ height: '35%' }}></span>
@@ -266,16 +303,16 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
           </div>
         </div>
 
-        {/* Card 3: Active Plans Budget */}
+        {/* Card 3: Project Budget (Clean White Card) */}
         <div className="aeux-card aeux-card-white">
-          <div className="aeux-card-label">Active Plans Budget</div>
+          <div className="aeux-card-label">Total Project Budget</div>
           <div className="aeux-card-hero-val dark">{fmt(stats?.totalBudget)}</div>
           <div className="aeux-card-footer">
             <div className="aeux-trend-badge green">
               <ArrowUpRight size={13} strokeWidth={2.5} />
-              <span>+5.1% than last month</span>
+              <span>{stats?.activeCount || 1} Active Plan</span>
             </div>
-            {/* 5-bar emerald mini chart graphic */}
+            {/* 5-bar emerald sparkline */}
             <div className="aeux-mini-bars emerald">
               <span style={{ height: '35%' }}></span>
               <span style={{ height: '60%' }}></span>
@@ -289,19 +326,19 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
 
       {/* ROW 2: SPLIT GRID (66% LINE CHART, 34% MINT HERO CARD) */}
       <div className="aeux-main-row">
-        {/* Left Column: Line Chart ("Climate Change Index") */}
+        {/* Left Column: Line Chart (Simple Title & Wording) */}
         <div className="aeux-card aeux-card-white aeux-chart-box">
           <div className="aeux-chart-header">
             <div>
-              <h2 className="aeux-section-title">Climate Change Index</h2>
-              <span className="aeux-section-sub">Weekly collections &amp; milestone projections</span>
+              <h2 className="aeux-section-title">Income &amp; Payments</h2>
+              <span className="aeux-section-sub">Payment collections across design stages</span>
             </div>
             <div className="aeux-chart-filter-pill">
-              {['2 month', 'Week', 'Year'].map((p) => (
+              {['Week', 'Month', 'Year'].map((p) => (
                 <button
                   key={p}
                   className={`aeux-time-btn ${timeframe === p ? 'active' : ''}`}
-                  onClick={() => setTimeframe(p)}
+                  onClick={() => handleTimeframeChange(p)}
                 >
                   {p}
                 </button>
@@ -336,18 +373,18 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
               </defs>
 
               {/* Left Y-axis Scale Numbers */}
-              <text x="18" y="35" fill="#94a3b8" fontSize="10" fontFamily="var(--font-family)">100</text>
-              <text x="18" y="75" fill="#94a3b8" fontSize="10" fontFamily="var(--font-family)">80</text>
-              <text x="18" y="115" fill="#94a3b8" fontSize="10" fontFamily="var(--font-family)">60</text>
-              <text x="18" y="155" fill="#94a3b8" fontSize="10" fontFamily="var(--font-family)">40</text>
-              <text x="18" y="190" fill="#94a3b8" fontSize="10" fontFamily="var(--font-family)">20</text>
+              <text x="18" y="35" fill="#94a3b8" fontSize="10" fontFamily="var(--font-family)">100%</text>
+              <text x="18" y="75" fill="#94a3b8" fontSize="10" fontFamily="var(--font-family)">80%</text>
+              <text x="18" y="115" fill="#94a3b8" fontSize="10" fontFamily="var(--font-family)">60%</text>
+              <text x="18" y="155" fill="#94a3b8" fontSize="10" fontFamily="var(--font-family)">40%</text>
+              <text x="18" y="190" fill="#94a3b8" fontSize="10" fontFamily="var(--font-family)">20%</text>
 
               {/* Horizontal Dashed Grid Lines */}
-              <line x1="45" y1="32" x2="680" y2="32" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.6" />
-              <line x1="45" y1="72" x2="680" y2="72" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.6" />
-              <line x1="45" y1="112" x2="680" y2="112" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.6" />
-              <line x1="45" y1="152" x2="680" y2="152" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.6" />
-              <line x1="45" y1="192" x2="680" y2="192" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.6" />
+              <line x1="48" y1="32" x2="680" y2="32" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.6" />
+              <line x1="48" y1="72" x2="680" y2="72" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.6" />
+              <line x1="48" y1="112" x2="680" y2="112" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.6" />
+              <line x1="48" y1="152" x2="680" y2="152" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.6" />
+              <line x1="48" y1="192" x2="680" y2="192" stroke="var(--border-color)" strokeDasharray="3 3" opacity="0.6" />
 
               {/* ACTIVE VERTICAL GUIDELINE */}
               <line
@@ -436,7 +473,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
             </div>
           </div>
 
-          {/* X-AXIS PERIOD LABELS (W1 to W8) */}
+          {/* X-AXIS PERIOD LABELS */}
           <div
             style={{
               display: 'flex',
@@ -452,10 +489,10 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
                 onClick={() => setActivePointIndex(idx)}
                 style={{
                   cursor: 'pointer',
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: idx === activePointIndex ? 700 : 500,
                   color: idx === activePointIndex ? '#0f172a' : '#94a3b8',
-                  padding: '2px 6px',
+                  padding: '2px 8px',
                   borderRadius: 6,
                   transition: 'all 0.15s ease',
                 }}
@@ -466,40 +503,39 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
           </div>
         </div>
 
-        {/* Right Column: Soft Mint/Sage Hero Panel ("99,681m TONS" Style) */}
+        {/* Right Column: Soft Mint/Sage Hero Panel (Clean, Simple Words - NO TONS!) */}
         <div className="aeux-card aeux-card-mint">
           <div>
             <div className="aeux-mint-hero-val">
-              {stats?.totalRevenue ? `Rs. ${(stats.totalRevenue / 1000).toFixed(0)}k` : 'Rs. 75k'}
-              <span className="aeux-mint-unit">TONS</span>
+              {fmt(stats?.totalRevenue || 75000)}
             </div>
             <div className="aeux-mint-trend">
               <ArrowUpRight size={14} strokeWidth={2.5} />
-              <span>20% collected milestones</span>
+              <span>Total Received</span>
             </div>
 
-            {/* Sub-item 1: House Design Plans (Mechanical recycling) */}
+            {/* Sub-item 1: House Plans */}
             <div className="aeux-mint-subitem">
               <div className="aeux-mint-icon-circle">
                 <FolderOpen size={17} color="#00d293" />
               </div>
               <div>
-                <div className="aeux-mint-subitem-title">Mechanical recycling</div>
+                <div className="aeux-mint-subitem-title">House Plans</div>
                 <div className="aeux-mint-subitem-desc">
-                  {stats?.activeCount || 1} Active Plans • {fmt(stats?.avgContract || 50000)}
+                  {stats?.activeCount || 1} Active • {fmt(stats?.totalBudget || 50000)} Budget
                 </div>
               </div>
             </div>
 
-            {/* Sub-item 2: Collected Cashflow (Chemical recycling) */}
+            {/* Sub-item 2: Client Payments */}
             <div className="aeux-mint-subitem">
               <div className="aeux-mint-icon-circle">
                 <CreditCard size={17} color="#00d293" />
               </div>
               <div>
-                <div className="aeux-mint-subitem-title">Chemical recycling</div>
+                <div className="aeux-mint-subitem-title">Client Payments</div>
                 <div className="aeux-mint-subitem-desc">
-                  {stats?.paymentsCount || 1} Settled Transactions • {fmt(stats?.totalRevenue || 75000)}
+                  {stats?.paymentsCount || 1} Received • All Confirmed
                 </div>
               </div>
             </div>
@@ -507,7 +543,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
         </div>
       </div>
 
-      {/* QUICK CUSTOMER MOBILE NUMBER SEARCH BANNER */}
+      {/* QUICK CUSTOMER PHONE SEARCH BANNER */}
       {onOpenCustomerLookup && (
         <div className="customer-lookup-banner" style={{ margin: '4px 0 0' }}>
           <div className="customer-lookup-banner-left">
@@ -515,9 +551,9 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
               <Phone size={18} strokeWidth={2.5} />
             </div>
             <div>
-              <strong style={{ fontSize: 14, color: 'var(--text-primary)' }}>Customer Mobile Number Search</strong>
+              <strong style={{ fontSize: 14, color: 'var(--text-primary)' }}>Search Client by Phone</strong>
               <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                Search unique mobile numbers to pull up client projects, paid amount &amp; remaining due
+                Type mobile number to view all plans, payments &amp; balance
               </p>
             </div>
           </div>
@@ -526,7 +562,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
             className="btn btn-primary btn-sm customer-lookup-banner-btn"
             onClick={onOpenCustomerLookup}
           >
-            <Search size={14} /> Search by Mobile Number
+            <Search size={14} /> Search Phone Number
           </button>
         </div>
       )}
@@ -535,11 +571,11 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
       <div className="card" style={{ marginTop: 4 }}>
         <div className="card-header">
           <div>
-            <h2>Recent Client Payments</h2>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Latest settlement transactions</span>
+            <h2>Recent Payments</h2>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Latest client payment receipts</span>
           </div>
           <button className="btn btn-primary btn-sm" onClick={() => onNavigate('payments')}>
-            View All Payments
+            View All
           </button>
         </div>
 
@@ -549,10 +585,10 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
             <thead>
               <tr>
                 <th>Client Name</th>
-                <th>Architectural Project</th>
-                <th>Amount Received</th>
+                <th>House Project</th>
+                <th>Amount Paid</th>
                 <th>Payment Method</th>
-                <th>Transaction Date</th>
+                <th>Date</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -585,7 +621,7 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
                     </td>
                     <td>
                       <span style={{ color: 'var(--primary)', fontSize: 12, fontWeight: 700 }}>
-                        ✓ Confirmed
+                        ✓ Paid
                       </span>
                     </td>
                   </tr>
