@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Download, X, Smartphone, Share, PlusSquare } from 'lucide-react'
+import { Download, X, Share, PlusSquare } from 'lucide-react'
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
@@ -18,9 +18,11 @@ export default function InstallPrompt() {
       return
     }
 
-    // Detect iOS
+    // Detect iOS devices (iPhone, iPad, iPod, or Safari on iOS)
     const userAgent = window.navigator.userAgent.toLowerCase()
-    const iosDevice = /iphone|ipad|ipod/.test(userAgent)
+    const iosDevice =
+      /iphone|ipad|ipod/.test(userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
     setIsIOS(iosDevice)
 
     // Listen for native install prompt event (Android, Chrome, Edge, Windows)
@@ -64,34 +66,41 @@ export default function InstallPrompt() {
   if (isStandalone || !showPrompt) return null
 
   return (
-    <div className="install-banner">
+    <aside className="install-banner" aria-label="Install App Banner">
       <div className="install-banner-content">
-        <div className="install-banner-icon">
-          <Smartphone size={22} />
+        <div className="install-banner-app-icon">
+          <img src="/icon.svg" alt="Dreamscape Logo" />
         </div>
         <div className="install-banner-text">
-          <strong>Install Dreamscape MS App</strong>
+          <div className="install-banner-title">
+            <strong>Install Dreamscape App</strong>
+            {isIOS && <span className="install-ios-pill">iOS Safari</span>}
+          </div>
           {isIOS ? (
             <p>
-              Tap <Share size={12} style={{ display: 'inline', verticalAlign: 'middle' }} /> Share then <strong>"Add to Home Screen"</strong> <PlusSquare size={12} style={{ display: 'inline', verticalAlign: 'middle' }} />
+              Tap <Share size={13} className="inline-icon" /> <strong>Share</strong>, then scroll and tap <strong>"Add to Home Screen"</strong> <PlusSquare size={13} className="inline-icon" />
             </p>
           ) : (
-            <p>Install for instant mobile access, fast refresh &amp; offline capability.</p>
+            <p>Install for instant mobile home-screen access &amp; offline capability.</p>
           )}
         </div>
       </div>
 
       <div className="install-banner-actions">
         {!isIOS && deferredPrompt && (
-          <button className="btn btn-primary btn-sm" onClick={handleInstallClick}>
+          <button className="btn btn-primary btn-sm install-cta-btn" onClick={handleInstallClick}>
             <Download size={14} /> Install Now
           </button>
         )}
-        <button className="install-dismiss-btn" onClick={handleDismiss} title="Dismiss">
+        <button
+          className="install-dismiss-btn"
+          onClick={handleDismiss}
+          title="Dismiss"
+          aria-label="Dismiss install prompt"
+        >
           <X size={16} />
         </button>
       </div>
-    </div>
+    </aside>
   )
 }
-

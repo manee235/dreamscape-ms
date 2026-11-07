@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
+import logoSvg from '../assets/logo.svg'
 import { supabase } from '../supabase'
 
 const DEFAULT_CREDENTIALS = {
@@ -66,13 +67,20 @@ export default function Login({ onLogin }) {
   return (
     <div className="mobile-login-wrapper">
       <div className="mobile-login-container">
-        {/* Top Solid Blue Hero Section */}
+        {/* Top Dark Hero Section with Emerald Glow & Official Arch Logo */}
         <div className="mobile-login-hero">
-          <h1 className="mobile-login-brand">Dreamscape</h1>
+          <div className="mobile-login-brand-group">
+            <img src={logoSvg} alt="Dreamscape" className="mobile-login-logo-img" />
+            <h1 className="mobile-login-brand">Dreamscape Designs</h1>
+          </div>
+          {/* Emerald green atmospheric glow matching uploaded design */}
+          <div className="mobile-login-green-glow" />
         </div>
 
-        {/* Bottom Curved Sheet */}
+        {/* Bottom Curved Sheet with top grab handle */}
         <div className="mobile-login-sheet">
+          <div className="mobile-sheet-handle" />
+
           <div className="mobile-login-header">
             <h2 className="mobile-login-title">Welcome Back</h2>
             <p className="mobile-login-subtitle">Enter your details below</p>
@@ -126,13 +134,13 @@ export default function Login({ onLogin }) {
               </div>
             </div>
 
-            {/* Solid Sign In Button */}
+            {/* Green Sign In Button matching Dreamscape theme */}
             <button type="submit" className="mobile-signin-btn" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
 
-          {/* Minimal Footer */}
+          {/* Minimal Subtle Footer */}
           <div className="mobile-login-footer">
             Admin Access Only &bull; Dreamscape MS
           </div>

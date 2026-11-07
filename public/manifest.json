@@ -1,13 +1,19 @@
 {
-  "name": "Dreamscape MS - Design & Planning Agency",
+  "name": "Dreamscape MS - House Design & Planning",
   "short_name": "Dreamscape",
-  "description": "Architectural Design & Planning Agency Management System",
+  "description": "House Design & Architectural Planning Agency Management System",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f141f",
+  "background_color": "#0d1117",
   "theme_color": "#00d293",
   "orientation": "portrait-primary",
   "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
@@ -22,4 +28,3 @@
     }
   ]
 }
-

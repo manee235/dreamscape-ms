@@ -49,6 +49,25 @@ function App() {
   // Customer Mobile Lookup Modal
   const [customerLookupOpen, setCustomerLookupOpen] = useState(false)
 
+  // Desktop Sidebar Collapsed State (persisted)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem('dms_sidebar_collapsed') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  const toggleSidebarCollapse = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem('dms_sidebar_collapsed', String(next))
+      } catch {}
+      return next
+    })
+  }
+
   // Light / Dark Mode State
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('dms_theme') || 'dark'
@@ -87,7 +106,14 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  if (!user) return <Login onLogin={handleLogin} />
+  if (!user) {
+    return (
+      <>
+        <InstallPrompt />
+        <Login onLogin={handleLogin} />
+      </>
+    )
+  }
 
   const renderPage = () => {
     switch (page) {
@@ -117,14 +143,14 @@ function App() {
   }
 
   return (
-    <div className="app-layout">
+    <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       {/* Mobile Drawer Backdrop */}
       <div
         className={`mobile-drawer-backdrop ${mobileMenuOpen ? 'open' : ''}`}
         onClick={() => setMobileMenuOpen(false)}
       />
 
-      {/* Sidebar with mobile drawer toggle */}
+      {/* Sidebar with mobile drawer toggle & desktop collapse */}
       <Sidebar
         activePage={page}
         onNavigate={navigateTo}
@@ -132,6 +158,8 @@ function App() {
         onLogout={handleLogout}
         isOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={toggleSidebarCollapse}
       />
 
       <main className="main-content">
@@ -148,12 +176,24 @@ function App() {
         {/* Clean, Mobile-Optimized Top Bar */}
         <header className="top-bar">
           <div className="top-bar-left">
+            {/* Mobile Hamburger Drawer Trigger */}
             <button
-              className="menu-toggle-btn"
+              className="menu-toggle-btn mobile-only-btn"
               onClick={() => setMobileMenuOpen(true)}
               title="Open Navigation"
             >
               <Menu size={22} />
+            </button>
+
+            {/* Desktop Collapse / Expand Toggle Button in Topbar */}
+            <button
+              className="sidebar-collapse-btn desktop-only-btn"
+              onClick={toggleSidebarCollapse}
+              title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              style={{ marginRight: 8 }}
+            >
+              <Menu size={19} />
             </button>
             <h1 className="top-bar-title">{PAGE_TITLES[page] || 'Dashboard'}</h1>
 
