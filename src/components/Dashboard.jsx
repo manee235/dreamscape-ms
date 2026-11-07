@@ -225,8 +225,10 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup, user, onOp
 
   const tooltipLeftPercent = ((currentPoint.x) / 700) * 100
 
-  const currentHour = new Date().getHours()
-  const greetingText = currentHour < 12 ? 'Good Morning' : currentHour < 18 ? 'Good Afternoon' : 'Good Evening'
+  const [greetingText] = useState(() => {
+    const hour = new Date().getHours()
+    return hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening'
+  })
   const userName = user?.fullName || (user?.username === 'isanka.t' ? 'Isanka Tharindu' : user?.username || 'Isanka Tharindu')
 
   return (

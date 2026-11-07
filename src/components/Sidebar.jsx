@@ -26,7 +26,7 @@ export default function Sidebar({
   activePage,
   onNavigate,
   user,
-  onLogout,
+  _onLogout,
   isOpen = false,
   onClose,
   isCollapsed = false,

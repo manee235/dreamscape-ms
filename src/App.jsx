@@ -13,7 +13,6 @@ import CustomerLookupModal from './components/CustomerLookupModal'
 import ErrorBoundary from './components/ErrorBoundary'
 import {
   Menu,
-  Search,
   Plus,
   Sun,
   Moon,

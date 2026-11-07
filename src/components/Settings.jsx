@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import {
-  User,
   Mail,
   Phone,
   Shield,
@@ -13,8 +12,6 @@ import {
   FileText,
   Printer,
   Sparkles,
-  Smartphone,
-  ExternalLink,
 } from 'lucide-react'
 import logoSvg from '../assets/logo.svg'
 import avatarImg from '../assets/avatar.jpg'
