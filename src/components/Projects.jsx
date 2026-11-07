@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
-import { FolderOpen, Plus, Pencil, Trash2, X, CheckCircle, TrendingUp, Clock, Compass } from 'lucide-react'
+import { FolderOpen, Plus, Pencil, Trash2, X, CheckCircle } from 'lucide-react'
 
 const emptyProject = {
   client_id: '',
@@ -44,21 +44,6 @@ export default function Projects() {
   const [editing, setEditing] = useState(null)
   const [saving, setSaving] = useState(false)
   const [alert, setAlert] = useState(null)
-
-  useEffect(() => {
-    fetchData()
-
-    // Realtime subscription
-    const channel = supabase
-      .channel('realtime-projects-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => fetchData())
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [])
 
   const fetchData = async () => {
     setLoading(true)
@@ -113,6 +98,21 @@ export default function Projects() {
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    fetchData()
+
+    // Realtime subscription
+    const channel = supabase
+      .channel('realtime-projects-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => fetchData())
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   const openAdd = () => { setForm(emptyProject); setEditing(null); setModal(true) }
   const openEdit = (p) => {

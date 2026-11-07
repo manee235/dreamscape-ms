@@ -4,26 +4,24 @@ import { Download, X, Share, PlusSquare } from 'lucide-react'
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [showPrompt, setShowPrompt] = useState(false)
-  const [isIOS, setIsIOS] = useState(false)
-  const [isStandalone, setIsStandalone] = useState(false)
-
-  useEffect(() => {
-    // Check if app is already running as installed standalone PWA
-    const isApp =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      window.navigator.standalone === true
-
-    if (isApp) {
-      setIsStandalone(true)
-      return
-    }
-
-    // Detect iOS devices (iPhone, iPad, iPod, or Safari on iOS)
+  const [isIOS] = useState(() => {
+    if (typeof window === 'undefined') return false
     const userAgent = window.navigator.userAgent.toLowerCase()
-    const iosDevice =
+    return (
       /iphone|ipad|ipod/.test(userAgent) ||
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-    setIsIOS(iosDevice)
+    )
+  })
+  const [isStandalone] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true
+    )
+  })
+
+  useEffect(() => {
+    if (isStandalone) return
 
     // Listen for native install prompt event (Android, Chrome, Edge, Windows)
     const handleBeforeInstall = (e) => {
@@ -38,14 +36,14 @@ export default function InstallPrompt() {
     window.addEventListener('beforeinstallprompt', handleBeforeInstall)
 
     // On iOS Safari, show helper prompt if not dismissed
-    if (iosDevice && !sessionStorage.getItem('dms_install_dismissed')) {
+    if (isIOS && !sessionStorage.getItem('dms_install_dismissed')) {
       setShowPrompt(true)
     }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall)
     }
-  }, [])
+  }, [isIOS, isStandalone])
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {

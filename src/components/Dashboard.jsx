@@ -93,21 +93,6 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
   const [chartData, setChartData] = useState(() => buildChartData([], []))
   const chartSvgRef = useRef(null)
 
-  useEffect(() => {
-    fetchData()
-
-    // Realtime listener for live sync
-    const channel = supabase
-      .channel('realtime-dashboard-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => fetchData())
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [])
-
   const fetchData = async () => {
     try {
       const [clientsRes, projectsRes, paymentsRes] = await Promise.all([
@@ -165,6 +150,21 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup }) {
       console.error('Dashboard load error:', err)
     }
   }
+
+  useEffect(() => {
+    fetchData()
+
+    // Realtime listener for live sync
+    const channel = supabase
+      .channel('realtime-dashboard-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => fetchData())
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   // Handle interaction across chart line
   const handleInteraction = (clientX) => {

@@ -6,12 +6,10 @@ import {
   Trash2,
   X,
   CheckCircle,
-  AlertCircle,
   TrendingUp,
   Download,
   MessageCircle,
   FileText,
-  DollarSign,
   ArrowUpRight,
   Clock,
   Check,
@@ -19,8 +17,6 @@ import {
 import {
   generateReceiptPDF,
   shareReceiptViaWhatsApp,
-  generateWhatsAppMessage,
-  formatWhatsAppPhone,
   formatLKR,
 } from '../utils/receiptGenerator'
 
@@ -51,33 +47,6 @@ export default function Payments() {
   // Success dialog state after saving payment
   const [successReceipt, setSuccessReceipt] = useState(null)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-
-  useEffect(() => {
-    fetchData()
-
-    // Supabase Realtime channel for instant syncing without page reload!
-    const channel = supabase
-      .channel('realtime-payments-sync')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'payments' },
-        () => {
-          fetchData()
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'projects' },
-        () => {
-          fetchData()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [])
 
   const fetchData = async () => {
     setLoading(true)
@@ -153,6 +122,33 @@ export default function Payments() {
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    fetchData()
+
+    // Supabase Realtime channel for instant syncing without page reload!
+    const channel = supabase
+      .channel('realtime-payments-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'payments' },
+        () => {
+          fetchData()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'projects' },
+        () => {
+          fetchData()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   const openAdd = () => {
     setForm(emptyPayment)
@@ -372,7 +368,13 @@ export default function Payments() {
               </tr>
             </thead>
             <tbody>
-              {projects.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
+                    Loading project balances...
+                  </td>
+                </tr>
+              ) : projects.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
                     No project balances recorded yet. Add clients and projects to track payments.

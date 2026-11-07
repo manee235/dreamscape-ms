@@ -40,7 +40,6 @@ function App() {
   })
 
   const [page, setPage] = useState('dashboard')
-  const [globalSearch, setGlobalSearch] = useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)

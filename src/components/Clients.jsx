@@ -15,6 +15,13 @@ export default function Clients() {
   const [saving, setSaving] = useState(false)
   const [alert, setAlert] = useState(null)
 
+  const fetchClients = async () => {
+    setLoading(true)
+    const { data } = await supabase.from('clients').select('*').order('created_at', { ascending: false })
+    setClients(data || [])
+    setLoading(false)
+  }
+
   useEffect(() => {
     fetchClients()
 
@@ -28,13 +35,6 @@ export default function Clients() {
       supabase.removeChannel(channel)
     }
   }, [])
-
-  const fetchClients = async () => {
-    setLoading(true)
-    const { data } = await supabase.from('clients').select('*').order('created_at', { ascending: false })
-    setClients(data || [])
-    setLoading(false)
-  }
 
   const openAdd = () => { setForm(emptyClient); setEditing(null); setModal(true) }
   const openEdit = (c) => { setForm({ ...c }); setEditing(c.id); setModal(true) }

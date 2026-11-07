@@ -1,19 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import {
-  Search,
   Phone,
-  User,
-  FolderOpen,
   CreditCard,
   X,
   MessageCircle,
-  FileText,
-  AlertCircle,
-  CheckCircle2,
-  ExternalLink,
+  Loader2,
 } from 'lucide-react'
-import { formatLKR, formatWhatsAppPhone, generateReceiptPDF } from '../utils/receiptGenerator'
+import { formatLKR, formatWhatsAppPhone } from '../utils/receiptGenerator'
 
 export default function CustomerLookupModal({ isOpen, onClose, onMarkPayment }) {
   const [phoneQuery, setPhoneQuery] = useState('')
@@ -22,37 +16,6 @@ export default function CustomerLookupModal({ isOpen, onClose, onMarkPayment }) 
   const [clientProjects, setClientProjects] = useState([])
   const [clientPayments, setClientPayments] = useState([])
   const [suggestions, setSuggestions] = useState([])
-
-  // Quick suggestions as user types
-  useEffect(() => {
-    if (!phoneQuery.trim()) {
-      setSuggestions([])
-      setMatchedClient(null)
-      return
-    }
-
-    const searchClients = async () => {
-      const q = phoneQuery.trim().replace(/[^\d+]/g, '')
-      const { data } = await supabase
-        .from('clients')
-        .select('*')
-        .ilike('phone', `%${q}%`)
-        .limit(5)
-
-      setSuggestions(data || [])
-
-      // Exact match
-      const exact = (data || []).find(
-        (c) => c.phone.replace(/[^\d]/g, '') === q.replace(/[^\d]/g, '')
-      )
-      if (exact) {
-        selectClient(exact)
-      }
-    }
-
-    const timer = setTimeout(searchClients, 250)
-    return () => clearTimeout(timer)
-  }, [phoneQuery])
 
   const selectClient = async (client) => {
     setSearching(true)
@@ -84,6 +47,37 @@ export default function CustomerLookupModal({ isOpen, onClose, onMarkPayment }) 
     setClientPayments(pmts)
     setSearching(false)
   }
+
+  // Quick suggestions as user types
+  useEffect(() => {
+    if (!phoneQuery.trim()) {
+      setSuggestions([])
+      setMatchedClient(null)
+      return
+    }
+
+    const searchClients = async () => {
+      const q = phoneQuery.trim().replace(/[^\d+]/g, '')
+      const { data } = await supabase
+        .from('clients')
+        .select('*')
+        .ilike('phone', `%${q}%`)
+        .limit(5)
+
+      setSuggestions(data || [])
+
+      // Exact match
+      const exact = (data || []).find(
+        (c) => c.phone.replace(/[^\d]/g, '') === q.replace(/[^\d]/g, '')
+      )
+      if (exact) {
+        selectClient(exact)
+      }
+    }
+
+    const timer = setTimeout(searchClients, 250)
+    return () => clearTimeout(timer)
+  }, [phoneQuery])
 
   const sendClientWhatsAppStatement = () => {
     if (!matchedClient || !matchedClient.phone) return
@@ -161,7 +155,10 @@ Thank you for planning your dream home with Dreamscape!
                 autoFocus
                 style={{ fontSize: 15 }}
               />
-              {phoneQuery && (
+              {searching && (
+                <Loader2 size={16} className="refresh-spinning" color="var(--primary)" />
+              )}
+              {phoneQuery && !searching && (
                 <button
                   style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
                   onClick={() => {
