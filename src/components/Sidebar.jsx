@@ -8,7 +8,6 @@ import {
   Sparkles,
   ChevronDown,
   Search,
-  Settings,
   MoreVertical,
 } from 'lucide-react'
 import logoSvg from '../assets/logo.svg'
@@ -118,21 +117,6 @@ export default function Sidebar({
             {!isCollapsed && badge && <span className="nav-badge">{badge}</span>}
           </button>
         ))}
-
-        {/* Settings button matching AeuxGlobal bottom nav */}
-        <button
-          className={`nav-item ${activePage === 'settings' ? 'active' : ''}`}
-          onClick={() => onNavigate('dashboard')}
-          title="Studio Settings"
-          style={{ marginTop: 'auto' }}
-        >
-          <div className="nav-item-left">
-            <div className="nav-icon-sq">
-              <Settings size={16} strokeWidth={2} />
-            </div>
-            {!isCollapsed && <span className="nav-item-title">Settings</span>}
-          </div>
-        </button>
       </nav>
 
       <div className="sidebar-footer">
