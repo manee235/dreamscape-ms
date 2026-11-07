@@ -16,11 +16,10 @@ import {
   Sun,
   Moon,
   RefreshCw,
-  LayoutDashboard,
   FolderOpen,
   Users,
-  CreditCard,
   Phone,
+  Home,
 } from 'lucide-react'
 
 const PAGE_TITLES = {
@@ -160,6 +159,7 @@ function App() {
         onClose={() => setMobileMenuOpen(false)}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={toggleSidebarCollapse}
+        onOpenCustomerLookup={() => setCustomerLookupOpen(true)}
       />
 
       <main className="main-content">
@@ -217,9 +217,6 @@ function App() {
                 readOnly
                 style={{ cursor: 'pointer' }}
               />
-              <kbd style={{ fontSize: 10, background: 'var(--border-color)', padding: '2px 6px', borderRadius: 4, color: 'var(--text-muted)' }}>
-                Mobile #
-              </kbd>
             </div>
           </div>
 
@@ -279,47 +276,68 @@ function App() {
           </ErrorBoundary>
         </div>
 
-        {/* Mobile Native Bottom Navigation Bar */}
-        <nav className="mobile-bottom-bar">
+        {/* Floating Capsule Dock (Matching Reference UI) */}
+        <nav className="mobile-pill-navbar" aria-label="Mobile Navigation">
+          {/* 1. Home / Dashboard */}
           <button
-            className={`mobile-nav-btn ${page === 'dashboard' ? 'active' : ''}`}
-            onClick={() => navigateTo('dashboard')}
+            className={`mobile-pill-item ${page === 'dashboard' && !customerLookupOpen ? 'active' : ''}`}
+            onClick={() => {
+              setCustomerLookupOpen(false)
+              navigateTo('dashboard')
+            }}
+            title="Overview"
+            aria-label="Overview"
           >
-            <LayoutDashboard size={20} />
-            <span>Overview</span>
+            <Home size={20} />
           </button>
 
+          {/* 2. Customer Mobile Search */}
           <button
-            className={`mobile-nav-btn ${page === 'projects' ? 'active' : ''}`}
-            onClick={() => navigateTo('projects')}
+            className={`mobile-pill-item ${customerLookupOpen ? 'active' : ''}`}
+            onClick={() => setCustomerLookupOpen(true)}
+            title="Search Customer by Mobile #"
+            aria-label="Search Customer by Mobile Number"
+          >
+            <Search size={20} />
+          </button>
+
+          {/* 3. Center Quick Action (+) */}
+          <button
+            className={`mobile-pill-item center-plus ${page === 'payments' ? 'active' : ''}`}
+            onClick={() => {
+              setCustomerLookupOpen(false)
+              navigateTo('payments')
+            }}
+            title="Mark Payment"
+            aria-label="Mark Payment"
+          >
+            <Plus size={22} strokeWidth={2.8} />
+          </button>
+
+          {/* 4. Projects */}
+          <button
+            className={`mobile-pill-item ${page === 'projects' && !customerLookupOpen ? 'active' : ''}`}
+            onClick={() => {
+              setCustomerLookupOpen(false)
+              navigateTo('projects')
+            }}
+            title="House Design Projects"
+            aria-label="Projects"
           >
             <FolderOpen size={20} />
-            <span>Projects</span>
           </button>
 
-          {/* Center Floating Action Button */}
+          {/* 5. Customers / Clients */}
           <button
-            className="mobile-nav-center-action"
-            title="Mark Payment"
-            onClick={() => navigateTo('payments')}
-          >
-            <Plus size={24} strokeWidth={2.8} />
-          </button>
-
-          <button
-            className={`mobile-nav-btn ${page === 'clients' ? 'active' : ''}`}
-            onClick={() => navigateTo('clients')}
+            className={`mobile-pill-item ${page === 'clients' && !customerLookupOpen ? 'active' : ''}`}
+            onClick={() => {
+              setCustomerLookupOpen(false)
+              navigateTo('clients')
+            }}
+            title="Customers"
+            aria-label="Customers"
           >
             <Users size={20} />
-            <span>Clients</span>
-          </button>
-
-          <button
-            className={`mobile-nav-btn ${page === 'payments' ? 'active' : ''}`}
-            onClick={() => navigateTo('payments')}
-          >
-            <CreditCard size={20} />
-            <span>Payments</span>
           </button>
         </nav>
       </main>

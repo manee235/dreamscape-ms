@@ -10,6 +10,9 @@ import {
   X,
   PanelLeftClose,
   PanelLeftOpen,
+  Sparkles,
+  ChevronDown,
+  Search,
 } from 'lucide-react'
 import logoSvg from '../assets/logo.svg'
 
@@ -29,6 +32,7 @@ export default function Sidebar({
   onClose,
   isCollapsed = false,
   onToggleCollapse,
+  onOpenCustomerLookup,
 }) {
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
@@ -81,8 +85,39 @@ export default function Sidebar({
         </div>
       </div>
 
+      {!isCollapsed && (
+        <div className="sidebar-aeux-top">
+          {/* Team Workspace Selector (Matching AeuxGlobal EcoPlastic widget) */}
+          <div className="sidebar-workspace-card" title="Active Studio Workspace">
+            <div className="sidebar-workspace-left">
+              <div className="sidebar-workspace-icon">
+                <Sparkles size={14} color="#00d293" />
+              </div>
+              <div className="sidebar-workspace-info">
+                <span className="sidebar-workspace-label">Team Workspace</span>
+                <span className="sidebar-workspace-name">Dreamscape Studio</span>
+              </div>
+            </div>
+            <ChevronDown size={14} color="#64748b" />
+          </div>
+
+          {/* Quick Search Capsule (Matching AeuxGlobal Search for... ⌘F) */}
+          {onOpenCustomerLookup && (
+            <div
+              className="sidebar-search-capsule"
+              onClick={onOpenCustomerLookup}
+              title="Search customer mobile number (⌘F)"
+            >
+              <Search size={14} color="#64748b" />
+              <span>Search for...</span>
+              <kbd>⌘+F</kbd>
+            </div>
+          )}
+        </div>
+      )}
+
       <nav className="sidebar-nav">
-        {!isCollapsed && <div className="nav-section-label">Main Menu</div>}
+        {!isCollapsed && <div className="nav-section-label">NAVIGATION</div>}
         {navItems.map(({ id, label, icon: Icon, badge }) => (
           <button
             key={id}
