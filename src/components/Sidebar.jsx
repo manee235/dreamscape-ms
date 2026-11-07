@@ -12,6 +12,7 @@ import {
   MoreVertical,
 } from 'lucide-react'
 import logoSvg from '../assets/logo.svg'
+import avatarImg from '../assets/avatar.jpg'
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -131,7 +132,11 @@ export default function Sidebar({
         >
           <div className="user-avatar-wrap">
             <div className="user-avatar">
-              {user?.username?.[0]?.toUpperCase() || 'A'}
+              <img
+                src={avatarImg}
+                alt="User Avatar"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+              />
             </div>
             <span className="user-online-dot" />
           </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './index.css'
+import avatarImg from './assets/avatar.jpg'
 import Login from './components/Login'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
@@ -279,9 +280,13 @@ function App() {
             {/* Admin Avatar Chip */}
             <div className="user-profile-chip" onClick={() => navigateTo('settings')} title="View Studio Settings & Profile">
               <div className="chip-avatar">
-                {user?.username?.[0]?.toUpperCase() || 'A'}
+                <img
+                  src={avatarImg}
+                  alt={user?.username || 'Admin'}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                />
               </div>
-              <span className="user-profile-name">{user?.username || 'Admin'}</span>
+              <span className="user-profile-name">{user?.username || 'isanka.t'}</span>
             </div>
           </div>
         </header>
@@ -292,7 +297,7 @@ function App() {
           </ErrorBoundary>
         </div>
 
-        {/* Floating Capsule Dock (Matching Reference UI) */}
+        {/* Floating Capsule Dock (Matching Reference UI - 4 Items without Search) */}
         <nav className="mobile-pill-navbar" aria-label="Mobile Navigation">
           {/* 1. Home / Dashboard */}
           <button
@@ -307,14 +312,17 @@ function App() {
             <Home size={20} />
           </button>
 
-          {/* 2. Customer Mobile Search */}
+          {/* 2. Projects */}
           <button
-            className={`mobile-pill-item ${customerLookupOpen ? 'active' : ''}`}
-            onClick={() => setCustomerLookupOpen(true)}
-            title="Search Customer by Mobile #"
-            aria-label="Search Customer by Mobile Number"
+            className={`mobile-pill-item ${page === 'projects' && !customerLookupOpen ? 'active' : ''}`}
+            onClick={() => {
+              setCustomerLookupOpen(false)
+              navigateTo('projects')
+            }}
+            title="House Design Projects"
+            aria-label="Projects"
           >
-            <Search size={20} />
+            <FolderOpen size={20} />
           </button>
 
           {/* 3. Center Quick Action (+) */}
@@ -330,20 +338,7 @@ function App() {
             <Plus size={22} strokeWidth={2.8} />
           </button>
 
-          {/* 4. Projects */}
-          <button
-            className={`mobile-pill-item ${page === 'projects' && !customerLookupOpen ? 'active' : ''}`}
-            onClick={() => {
-              setCustomerLookupOpen(false)
-              navigateTo('projects')
-            }}
-            title="House Design Projects"
-            aria-label="Projects"
-          >
-            <FolderOpen size={20} />
-          </button>
-
-          {/* 5. Customers / Clients */}
+          {/* 4. Customers / Clients */}
           <button
             className={`mobile-pill-item ${page === 'clients' && !customerLookupOpen ? 'active' : ''}`}
             onClick={() => {

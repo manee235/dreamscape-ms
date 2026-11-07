@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { supabase } from '../supabase'
+import avatarImg from '../assets/avatar.jpg'
 import {
   FolderOpen,
   ArrowUpRight,
@@ -11,7 +12,6 @@ import {
   Plus,
   UserPlus,
   FolderPlus,
-  Bell,
   Menu,
   Send,
   Layers,
@@ -241,7 +241,11 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup, user, onOp
           <div className="mobile-hero-header">
             <div className="mobile-hero-user" onClick={() => onNavigate('settings')} style={{ cursor: 'pointer' }}>
               <div className="mobile-hero-avatar-box">
-                <span>{userName[0]?.toUpperCase() || 'I'}</span>
+                <img
+                  src={avatarImg}
+                  alt={userName}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                />
               </div>
               <div className="mobile-hero-greeting-col">
                 <span className="mobile-hero-greeting-sub">{greetingText}</span>
@@ -252,12 +256,11 @@ export default function Dashboard({ onNavigate, onOpenCustomerLookup, user, onOp
             <div className="mobile-hero-top-btns">
               <button
                 className="mobile-hero-circle-btn"
-                onClick={() => onNavigate('settings')}
-                title="Notifications"
-                aria-label="Notifications"
+                onClick={onOpenCustomerLookup}
+                title="Search Customer by Phone #"
+                aria-label="Search Customer"
               >
-                <Bell size={18} />
-                <span className="hero-bell-dot" />
+                <Search size={18} />
               </button>
               <button
                 className="mobile-hero-circle-btn"

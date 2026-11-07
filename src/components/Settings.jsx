@@ -17,6 +17,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import logoSvg from '../assets/logo.svg'
+import avatarImg from '../assets/avatar.jpg'
 
 export default function Settings({ user, onLogout, theme, onToggleTheme, onNavigate }) {
   const [copied, setCopied] = useState(false)
@@ -45,7 +46,11 @@ export default function Settings({ user, onLogout, theme, onToggleTheme, onNavig
         <div className="settings-card profile-hero-card">
           <div className="profile-hero-top">
             <div className="profile-avatar-large">
-              <span className="profile-initial">{username[0]?.toUpperCase() || 'A'}</span>
+              <img
+                src={avatarImg}
+                alt={displayName}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+              />
               <span className="profile-status-dot" title="Active Administrator" />
             </div>
             <div className="profile-hero-info">

@@ -638,13 +638,13 @@ button, input, select, textarea, table, h1, h2, h3, h4, h5, h6, span, p, label {
   width: 36px;
   height: 36px;
   background: #0d1117;
-  border: 1px solid rgba(0, 210, 147, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary-text);
-  box-shadow: 0 4px 14px rgba(0, 210, 147, 0.2);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
 }
 
 .brand-text h2 {
@@ -2192,12 +2192,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 28px);
-  max-width: 380px;
+  max-width: 320px;
   height: 64px;
   background: #080b11;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
-  padding: 6px 10px;
+  padding: 6px 14px;
   justify-content: space-between;
   align-items: center;
   z-index: 500;
@@ -2246,9 +2246,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .mobile-pill-item.center-plus.active {
-  background: #00d293;
-  color: #04261a;
-  box-shadow: 0 0 20px rgba(0, 210, 147, 0.55), 0 4px 14px rgba(0, 0, 0, 0.35);
+  background: #059669;
+  color: #ffffff;
+  box-shadow: 0 0 20px rgba(5, 150, 105, 0.55), 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 .mobile-drawer-backdrop {
