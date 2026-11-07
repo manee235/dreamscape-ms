@@ -13,9 +13,11 @@ import {
   ArrowUpRight,
   Clock,
   Check,
+  Printer,
 } from 'lucide-react'
 import {
   generateReceiptPDF,
+  printReceiptPDF,
   shareReceiptViaWhatsApp,
   formatLKR,
 } from '../utils/receiptGenerator'
@@ -562,10 +564,17 @@ export default function Payments() {
                         <div style={{ display: 'flex', gap: 6 }}>
                           <button
                             className="btn btn-outline btn-sm"
-                            title="Download PDF"
+                            title="Download PDF Receipt with Logo"
                             onClick={() => generateReceiptPDF(rowReceiptData)}
                           >
                             <FileText size={13} /> PDF
+                          </button>
+                          <button
+                            className="btn btn-outline btn-sm"
+                            title="Print PDF Receipt with Logo"
+                            onClick={() => printReceiptPDF(rowReceiptData)}
+                          >
+                            <Printer size={13} /> Print
                           </button>
                           <button
                             className="btn btn-sm"
@@ -641,9 +650,18 @@ export default function Payments() {
                   <button
                     className="btn btn-outline btn-sm"
                     style={{ flex: 1, justifyContent: 'center' }}
+                    title="Download PDF"
                     onClick={() => generateReceiptPDF(rowReceiptData)}
                   >
                     <FileText size={13} /> PDF
+                  </button>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    style={{ flex: 1, justifyContent: 'center' }}
+                    title="Print PDF Receipt"
+                    onClick={() => printReceiptPDF(rowReceiptData)}
+                  >
+                    <Printer size={13} /> Print
                   </button>
                   <button
                     className="btn btn-sm"
@@ -999,6 +1017,14 @@ export default function Payments() {
                   onClick={() => sendWhatsApp(successReceipt)}
                 >
                   <MessageCircle size={18} /> Send / Share PDF to WhatsApp
+                </button>
+
+                <button
+                  className="btn btn-outline"
+                  style={{ justifyContent: 'center', padding: 11 }}
+                  onClick={() => printReceiptPDF(successReceipt)}
+                >
+                  <Printer size={15} /> Print PDF Receipt (with Logo)
                 </button>
 
                 <button

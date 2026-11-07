@@ -98,9 +98,34 @@ button, input, select, textarea, table, h1, h2, h3, h4, h5, h6, span, p, label {
 .app-layout {
   display: flex;
   min-height: 100vh;
-  background: var(--bg-main);
+  background: radial-gradient(circle at 0% 0%, rgba(0, 210, 147, 0.4) 0%, rgba(0, 210, 147, 0.12) 28%, transparent 58%), #06090d;
   position: relative;
   overflow-x: hidden;
+}
+
+[data-theme="light"] body {
+  background: radial-gradient(circle at 0% 0%, rgba(0, 210, 147, 0.35) 0%, rgba(0, 210, 147, 0.1) 25%, transparent 55%), #06090d;
+}
+
+[data-theme="light"] .app-layout {
+  background: radial-gradient(circle at 0% 0%, rgba(0, 210, 147, 0.35) 0%, rgba(0, 210, 147, 0.1) 25%, transparent 55%), #06090d;
+}
+
+@media (min-width: 769px) {
+  [data-theme="light"] .main-content {
+    background: #ffffff !important;
+    border-top-left-radius: 36px;
+    border-bottom-left-radius: 36px;
+    box-shadow: -16px 0 45px rgba(0, 0, 0, 0.32);
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+  }
+
+  [data-theme="light"] .top-bar {
+    background: #ffffff !important;
+    border-top-left-radius: 36px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+  }
 }
 
 /* Background Ambient Elements */
@@ -301,25 +326,162 @@ button, input, select, textarea, table, h1, h2, h3, h4, h5, h6, span, p, label {
   font-size: 10px !important;
   letter-spacing: 1.2px !important;
   padding: 10px 14px 6px !important;
+  font-weight: 700 !important;
+}
+
+.nav-icon-sq {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
 .sidebar .nav-item {
   color: #94a3b8 !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px !important;
+  border-radius: 14px !important;
+  margin-bottom: 5px !important;
+  transition: all 0.2s ease;
+  background: transparent;
+  border: 1px solid transparent;
 }
 
 .sidebar .nav-item:hover {
   background: rgba(255, 255, 255, 0.05) !important;
-  color: #f8fafc !important;
+  color: #ffffff !important;
+}
+
+.sidebar .nav-item:hover .nav-icon-sq {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 .sidebar .nav-item.active {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.09) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+}
+
+.sidebar .nav-item.active .nav-icon-sq {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2) !important;
 }
 
 .sidebar .nav-item.active .nav-item-left svg {
-  color: #00d293 !important;
+  color: #ffffff !important;
+}
+
+.nav-item-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+/* User account section matching AeuxGlobal */
+.user-section-label {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  padding: 0 4px 10px;
+}
+
+.sidebar-user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.user-avatar-wrap {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+}
+
+.user-avatar-wrap .user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #00d293;
+  color: #04261a;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-online-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #00d293;
+  border: 2px solid #0a0e15;
+  box-shadow: 0 0 6px #00d293;
+}
+
+.sidebar-user-card .user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sidebar-user-card .user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-card .user-role {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-options-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  transition: all 0.2s ease;
+}
+
+.user-options-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 
 .sidebar.collapsed .sidebar-aeux-top {

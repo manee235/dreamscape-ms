@@ -1,6 +1,10 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// Official Dreamscape logo embedded as high-res PNG data URI for offline PDF rendering
+const DREAMSCAPE_LOGO_PNG =
+  'data:image/png;base64,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fUhtQoOMCioB4eMv1wUzxlmwuUbyfP99TLWi9YnlDB+r55klwme6hlhH1Nc2HDHNGzp3bwzhM11862LSCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAm+ctpRFMW2KIoPPZ2Ivp4XE0flA8AE4QPABOEDwAThA8AE4QPABOEDwAThA8AE4QPABOEDwAThA8AE4QPABOEDwAThA8AE4QPABOEDwAThA8AE4QPABOEDwAThA8AE4QPABOEDwAThA8AEt86Ztl3L0R94vZgCwmfaVrxeTBXNLgAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmCB8AJggfACYIHwAmuHXO8D7M7QWP0Jb3wR6VDwAThA8AE4QPABNVn89aHnBbcn7gacuJ6laFz6IoivuxHygwIVxPHmh2ATBB+AAwQfgAMFH1+RyKothx+oFgXDuxiqL4P0tck3hdU/HRAAAAAElFTkSuQmCC';
+
 // Format numbers into Sri Lankan currency display
 export function formatLKR(amount) {
   return 'Rs. ' + Number(amount || 0).toLocaleString('en-LK', {
@@ -100,20 +104,34 @@ export function buildReceiptPDFDoc({
   doc.setFillColor(0, 210, 147); // #00d293 solid mint
   doc.rect(0, 42, pageWidth, 2.5, 'F');
 
+  // Brand Logo Badge Container with solid emerald accent
+  doc.setFillColor(22, 31, 44);
+  doc.setDrawColor(0, 210, 147);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(14, 8, 25, 25, 3, 3, 'FD');
+
+  // Embed the official architectural arches logo inside the badge
+  try {
+    doc.addImage(DREAMSCAPE_LOGO_PNG, 'PNG', 16.5, 12.2, 20, 15.54);
+  } catch (err) {
+    console.warn('Failed to render PDF logo:', err);
+  }
+
   // Agency branding in header
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
-  doc.text('DREAMSCAPE', 14, 18);
+  doc.setFontSize(18);
+  doc.text('DREAMSCAPE', 43, 17);
 
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 210, 147);
-  doc.text('HOUSE DESIGN & PLANNING AGENCY', 14, 25);
+  doc.text('HOUSE DESIGN & PLANNING AGENCY', 43, 23.5);
 
   doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
   doc.setTextColor(148, 163, 184);
-  doc.text('252/2 Kanduboda, Bamunakotuwa | Tel: 0779962051', 14, 32);
+  doc.text('252/2 Kanduboda, Bamunakotuwa | Tel: 0779962051', 43, 29);
 
   // Receipt title on the right
   doc.setTextColor(255, 255, 255);
@@ -269,6 +287,20 @@ export function buildReceiptPDFDoc({
 export function generateReceiptPDF(receiptData) {
   const { doc, filename } = buildReceiptPDFDoc(receiptData);
   doc.save(filename);
+  return doc;
+}
+
+// Print receipt PDF directly via browser print dialog
+export function printReceiptPDF(receiptData) {
+  const { doc } = buildReceiptPDFDoc(receiptData);
+  doc.autoPrint();
+  const blobUrl = doc.output('bloburl');
+  const printWindow = window.open(blobUrl, '_blank');
+  if (printWindow) {
+    try {
+      printWindow.focus();
+    } catch {}
+  }
   return doc;
 }
 

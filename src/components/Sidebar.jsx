@@ -4,13 +4,12 @@ import {
   Users,
   FolderOpen,
   CreditCard,
-  LogOut,
-  ArrowRight,
-  FileSpreadsheet,
   X,
   Sparkles,
   ChevronDown,
   Search,
+  Settings,
+  MoreVertical,
 } from 'lucide-react'
 import logoSvg from '../assets/logo.svg'
 
@@ -111,48 +110,56 @@ export default function Sidebar({
             title={label}
           >
             <div className="nav-item-left">
-              <Icon size={18} strokeWidth={2} />
-              {!isCollapsed && <span>{label}</span>}
+              <div className="nav-icon-sq">
+                <Icon size={16} strokeWidth={2} />
+              </div>
+              {!isCollapsed && <span className="nav-item-title">{label}</span>}
             </div>
             {!isCollapsed && badge && <span className="nav-badge">{badge}</span>}
-            {activePage === id && <div className="nav-indicator" />}
           </button>
         ))}
+
+        {/* Settings button matching AeuxGlobal bottom nav */}
+        <button
+          className={`nav-item ${activePage === 'settings' ? 'active' : ''}`}
+          onClick={() => onNavigate('dashboard')}
+          title="Studio Settings"
+          style={{ marginTop: 'auto' }}
+        >
+          <div className="nav-item-left">
+            <div className="nav-icon-sq">
+              <Settings size={16} strokeWidth={2} />
+            </div>
+            {!isCollapsed && <span className="nav-item-title">Settings</span>}
+          </div>
+        </button>
       </nav>
 
-      {/* Floating Emerald Summary Card (hidden when collapsed) */}
-      {!isCollapsed && (
-        <div className="sidebar-promo">
-          <h4>Summary Report</h4>
-          <p>Export all project cashflow &amp; balance statements</p>
-          <button className="promo-btn" onClick={() => onNavigate('payments')}>
-            <FileSpreadsheet size={13} />
-            <span>View Reports</span>
-            <ArrowRight size={12} />
-          </button>
-        </div>
-      )}
-
       <div className="sidebar-footer">
-        <div className="sidebar-user" title={user?.fullName || user?.username || 'Admin'}>
-          <div className="user-avatar">
-            {user?.username?.[0]?.toUpperCase() || 'A'}
+        {!isCollapsed && <div className="user-section-label">USER ACCOUNT</div>}
+        <div className="sidebar-user-card" title={user?.fullName || user?.username || 'Admin'}>
+          <div className="user-avatar-wrap">
+            <div className="user-avatar">
+              {user?.username?.[0]?.toUpperCase() || 'A'}
+            </div>
+            <span className="user-online-dot" />
           </div>
           {!isCollapsed && (
             <div className="user-info">
-              <strong>{user?.fullName || user?.username || 'Admin'}</strong>
-              <span>Lead Architect &amp; Admin</span>
+              <strong className="user-name">{user?.fullName || user?.username || 'Alex Williamson'}</strong>
+              <span className="user-role">#ds-1974 · Admin</span>
             </div>
           )}
+          {!isCollapsed && (
+            <button
+              className="user-options-btn"
+              onClick={onLogout}
+              title="Sign Out / Switch User"
+            >
+              <MoreVertical size={16} color="#64748b" />
+            </button>
+          )}
         </div>
-        <button
-          className="logout-btn"
-          onClick={onLogout}
-          title="Sign Out"
-        >
-          <LogOut size={16} />
-          {!isCollapsed && <span>Sign Out</span>}
-        </button>
       </div>
     </aside>
   )
