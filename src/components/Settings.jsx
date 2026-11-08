@@ -12,17 +12,47 @@ import {
   FileText,
   Printer,
   Sparkles,
+  Ruler,
+  Calculator,
+  Check,
 } from 'lucide-react'
 import logoSvg from '../assets/logo.svg'
 import avatarImg from '../assets/avatar.jpg'
+import {
+  getStoredRatePerSqft,
+  setStoredRatePerSqft,
+} from '../utils/pricing'
 
 export default function Settings({ user, onLogout, theme, onToggleTheme, onNavigate }) {
   const [copied, setCopied] = useState(false)
+  const [ratePerSqft, setRatePerSqft] = useState(() => getStoredRatePerSqft())
+  const [rateInput, setRateInput] = useState(() => String(getStoredRatePerSqft()))
+  const [testSqft, setTestSqft] = useState('2000')
+  const [rateSavedMsg, setRateSavedMsg] = useState('')
 
   const handleCopyPhone = () => {
     navigator.clipboard?.writeText('0779962051')
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleSaveRate = (e) => {
+    if (e) e.preventDefault()
+    const num = parseFloat(rateInput)
+    if (!isNaN(num) && num > 0) {
+      setStoredRatePerSqft(num)
+      setRatePerSqft(num)
+      setRateSavedMsg(`Rate successfully updated to Rs. ${num.toLocaleString('en-LK', { minimumFractionDigits: 2 })} / sq. ft.`)
+      setTimeout(() => setRateSavedMsg(''), 3500)
+    }
+  }
+
+  const handlePresetSelect = (preset) => {
+    setRateInput(String(preset))
+    setStoredRatePerSqft(preset)
+    setRatePerSqft(preset)
+    setRateSavedMsg(`Rate updated to Rs. ${preset.toFixed(2)} / sq. ft.`)
+    setTimeout(() => setRateSavedMsg(''), 3500)
   }
 
   const username = user?.username || 'isanka.t'
@@ -106,6 +136,129 @@ export default function Settings({ user, onLogout, theme, onToggleTheme, onNavig
               </div>
             </div>
           </div>
+        </div>
+
+        {/* House Plan Pricing by Square Feet */}
+        <div className="settings-card pricing-settings-card">
+          <div className="settings-card-header">
+            <div className="settings-card-icon-sq">
+              <Ruler size={18} color="#059669" />
+            </div>
+            <div>
+              <h3>House Plan Pricing by Square Feet</h3>
+              <p>Admin configuration for automatic project price estimation</p>
+            </div>
+          </div>
+
+          <div className="pricing-rate-hero">
+            <div>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                Current Studio Base Rate
+              </span>
+              <div className="pricing-rate-val">
+                <strong>Rs. {Number(ratePerSqft).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</strong>
+                <span>/ sq. ft.</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span className="pref-tag">Active Studio Standard</span>
+            </div>
+          </div>
+
+          {rateSavedMsg && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              background: 'rgba(5, 150, 105, 0.12)',
+              border: '1px solid rgba(5, 150, 105, 0.3)',
+              color: '#059669',
+              padding: '10px 14px',
+              borderRadius: 10,
+              fontSize: 12.5,
+              fontWeight: 600,
+              marginBottom: 14,
+            }}>
+              <CheckCircle2 size={16} />
+              <span>{rateSavedMsg}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSaveRate}>
+            <div className="form-group" style={{ marginBottom: 10 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: 6 }}>
+                Change Rate per Square Foot (Rs.)
+              </label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: 13, fontWeight: 600 }}>
+                    Rs.
+                  </span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="0.5"
+                    value={rateInput}
+                    onChange={(e) => setRateInput(e.target.value)}
+                    placeholder="e.g. 150.00"
+                    style={{ paddingLeft: 42, width: '100%' }}
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ padding: '0 18px', minWidth: 100 }}>
+                  <Check size={16} />
+                  <span>Save Rate</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Presets */}
+            <div style={{ marginTop: 8 }}>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>Quick Presets:</span>
+              <div className="pricing-preset-pills">
+                {[50, 100, 150, 200, 250, 300].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    className={`pricing-preset-chip ${Number(rateInput) === preset ? 'active' : ''}`}
+                    onClick={() => handlePresetSelect(preset)}
+                  >
+                    Rs. {preset} / sq.ft
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Live Interactive Calculation Preview */}
+            <div className="pricing-calc-box">
+              <div className="pricing-calc-header">
+                <Calculator size={14} />
+                <span>Live Plan Pricing Calculator Preview</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
+                <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>Test Plan Area:</span>
+                <input
+                  type="number"
+                  min="100"
+                  step="50"
+                  value={testSqft}
+                  onChange={(e) => setTestSqft(e.target.value)}
+                  style={{ width: 120, padding: '4px 8px', fontSize: 13, borderRadius: 8 }}
+                />
+                <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>sq. ft.</span>
+              </div>
+              <div className="pricing-calc-formula">
+                <span>{Number(testSqft || 0).toLocaleString()} sq. ft.</span>
+                <span>×</span>
+                <span>Rs. {Number(rateInput || ratePerSqft).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</span>
+                <span>=</span>
+                <strong style={{ color: '#059669', fontSize: 15 }}>
+                  Rs. {((parseFloat(testSqft) || 0) * (parseFloat(rateInput) || ratePerSqft)).toLocaleString('en-LK', { minimumFractionDigits: 2 })}
+                </strong>
+                <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>(Calculated Total Contract Price)</span>
+              </div>
+            </div>
+          </form>
         </div>
 
         {/* Studio Branding & PDF Receipts Preview */}

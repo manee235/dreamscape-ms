@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
-import { FolderOpen, Plus, Pencil, Trash2, X, CheckCircle } from 'lucide-react'
+import { FolderOpen, Plus, Pencil, Trash2, X, CheckCircle, Calculator, Ruler } from 'lucide-react'
+import {
+  getStoredRatePerSqft,
+  parseSqftFromDescription,
+  buildDescriptionWithSqft,
+} from '../utils/pricing'
 
 const emptyProject = {
   client_id: '',
@@ -8,6 +13,8 @@ const emptyProject = {
   project_type: 'House Design & Planning',
   description: '',
   status: 'Active',
+  sqft: '',
+  rate_per_sqft: '',
   total_amount: '',
   start_date: '',
   end_date: '',
@@ -73,6 +80,7 @@ export default function Projects() {
         const total = Number(p.total_amount || 0)
         const paid = paymentTotals.get(p.id) || 0
         const remaining = Math.max(0, total - paid)
+        const { sqft, rate } = parseSqftFromDescription(p.description)
         return {
           project_id: p.id,
           project_name: p.project_name,
@@ -82,6 +90,8 @@ export default function Projects() {
           total_amount: total,
           paid_amount: paid,
           remaining_amount: remaining,
+          sqft: sqft || '',
+          rate_per_sqft: rate || '',
           client_id: p.client_id,
           client_name: client?.name || 'Unknown Client',
           client_phone: client?.phone,
@@ -114,14 +124,27 @@ export default function Projects() {
     }
   }, [])
 
-  const openAdd = () => { setForm(emptyProject); setEditing(null); setModal(true) }
+  const openAdd = () => {
+    const currentRate = getStoredRatePerSqft()
+    setForm({
+      ...emptyProject,
+      rate_per_sqft: currentRate,
+    })
+    setEditing(null)
+    setModal(true)
+  }
+
   const openEdit = (p) => {
+    const { sqft, rate, cleanDesc } = parseSqftFromDescription(p.description)
+    const rateToUse = rate || (sqft && p.total_amount ? (Number(p.total_amount) / Number(sqft)).toFixed(2) : getStoredRatePerSqft())
     setForm({
       client_id: p.client_id,
       project_name: p.project_name,
       project_type: p.project_type,
-      description: p.description || '',
+      description: cleanDesc || '',
       status: p.status,
+      sqft: sqft || '',
+      rate_per_sqft: rateToUse,
       total_amount: p.total_amount,
       start_date: p.start_date || '',
       end_date: p.end_date || '',
@@ -129,7 +152,39 @@ export default function Projects() {
     setEditing(p.project_id)
     setModal(true)
   }
+
   const closeModal = () => { setModal(false); setForm(emptyProject); setEditing(null) }
+
+  const handleSqftChange = (val) => {
+    const sqftNum = parseFloat(val)
+    const rateNum = parseFloat(form.rate_per_sqft) || getStoredRatePerSqft()
+    if (!isNaN(sqftNum) && sqftNum > 0) {
+      const calculatedPrice = (sqftNum * rateNum).toFixed(2)
+      setForm(prev => ({
+        ...prev,
+        sqft: val,
+        rate_per_sqft: prev.rate_per_sqft || rateNum,
+        total_amount: calculatedPrice,
+      }))
+    } else {
+      setForm(prev => ({ ...prev, sqft: val }))
+    }
+  }
+
+  const handleRateChange = (val) => {
+    const rateNum = parseFloat(val)
+    const sqftNum = parseFloat(form.sqft)
+    if (!isNaN(sqftNum) && sqftNum > 0 && !isNaN(rateNum) && rateNum > 0) {
+      const calculatedPrice = (sqftNum * rateNum).toFixed(2)
+      setForm(prev => ({
+        ...prev,
+        rate_per_sqft: val,
+        total_amount: calculatedPrice,
+      }))
+    } else {
+      setForm(prev => ({ ...prev, rate_per_sqft: val }))
+    }
+  }
 
   const showAlert = (msg, type = 'success') => {
     setAlert({ msg, type })
@@ -139,8 +194,13 @@ export default function Projects() {
   const handleSave = async (e) => {
     e.preventDefault()
     setSaving(true)
+    const finalDescription = buildDescriptionWithSqft(form.description, form.sqft, form.rate_per_sqft)
     const payload = {
-      ...form,
+      client_id: form.client_id,
+      project_name: form.project_name,
+      project_type: form.project_type,
+      description: finalDescription || null,
+      status: form.status,
       total_amount: parseFloat(form.total_amount) || 0,
       start_date: form.start_date || null,
       end_date: form.end_date || null,
@@ -245,7 +305,14 @@ export default function Projects() {
                       return (
                         <tr key={p.project_id}>
                           <td>
-                            <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{p.project_name}</div>
+                            <div style={{ fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                              <span>{p.project_name}</span>
+                              {p.sqft && (
+                                <span className="sqft-badge" title={`House Plan Area: ${p.sqft} sq.ft`}>
+                                  <Ruler size={10} /> {Number(p.sqft).toLocaleString()} sq.ft
+                                </span>
+                              )}
+                            </div>
                             <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.project_type}</div>
                           </td>
                           <td>
@@ -291,7 +358,14 @@ export default function Projects() {
                     <div key={p.project_id} className="mobile-data-card">
                       <div className="mobile-data-card-header">
                         <div>
-                          <strong style={{ fontSize: 14 }}>{p.project_name}</strong>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            <strong style={{ fontSize: 14 }}>{p.project_name}</strong>
+                            {p.sqft && (
+                              <span className="sqft-badge">
+                                <Ruler size={10} /> {Number(p.sqft).toLocaleString()} sq.ft
+                              </span>
+                            )}
+                          </div>
                           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{p.client_name} • {p.project_type}</div>
                         </div>
                         <span className={statusBadge(p.status)}>{p.status}</span>
@@ -362,9 +436,59 @@ export default function Projects() {
                     <label>Description</label>
                     <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Project specifications, rooms, design style..." />
                   </div>
+
+                  {/* Pricing by Square Feet Row */}
+                  <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Ruler size={14} color="#059669" />
+                      <span>Plan Area (Square Feet / sq. ft.)</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={form.sqft}
+                      onChange={e => handleSqftChange(e.target.value)}
+                      placeholder="e.g. 2500"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Calculator size={14} color="#059669" />
+                      <span>Rate per Sq. Ft. (Rs.)</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={form.rate_per_sqft}
+                      onChange={e => handleRateChange(e.target.value)}
+                      placeholder={String(getStoredRatePerSqft())}
+                    />
+                  </div>
+
+                  {/* Auto-calculation Banner */}
+                  {Boolean(form.sqft && parseFloat(form.sqft) > 0) && (
+                    <div className="sqft-calc-preview">
+                      <Calculator size={15} color="#059669" />
+                      <span>
+                        Calculated: <strong>{Number(form.sqft).toLocaleString()} sq. ft.</strong> × <strong>Rs. {Number(form.rate_per_sqft || getStoredRatePerSqft()).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</strong> = <strong style={{ color: '#059669' }}>Rs. {Number(form.total_amount || 0).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</strong>
+                      </span>
+                    </div>
+                  )}
+
                   <div className="form-group">
                     <label>Total Project Contract (Rs.) *</label>
-                    <input type="number" required min="0" step="0.01" value={form.total_amount} onChange={e => setForm({ ...form, total_amount: e.target.value })} placeholder="850000.00" />
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      step="0.01"
+                      value={form.total_amount}
+                      onChange={e => setForm({ ...form, total_amount: e.target.value })}
+                      placeholder="e.g. 375000.00"
+                    />
                   </div>
                   <div className="form-group">
                     <label>Status</label>
