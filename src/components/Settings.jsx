@@ -223,7 +223,7 @@ export default function Settings({ user, onLogout, theme, onToggleTheme, onNavig
                     className={`pricing-preset-chip ${Number(rateInput) === preset ? 'active' : ''}`}
                     onClick={() => handlePresetSelect(preset)}
                   >
-                    Rs. {preset} / sq.ft
+                    Rs. {preset}
                   </button>
                 ))}
               </div>
@@ -233,29 +233,33 @@ export default function Settings({ user, onLogout, theme, onToggleTheme, onNavig
             <div className="pricing-calc-box">
               <div className="pricing-calc-header">
                 <Calculator size={14} />
-                <span>Live Plan Pricing Calculator Preview</span>
+                <span>Interactive Estimation Preview</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
-                <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>Test Plan Area:</span>
-                <input
-                  type="number"
-                  min="100"
-                  step="50"
-                  value={testSqft}
-                  onChange={(e) => setTestSqft(e.target.value)}
-                  style={{ width: 120, padding: '4px 8px', fontSize: 13, borderRadius: 8 }}
-                />
-                <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>sq. ft.</span>
+              <div className="pricing-calc-input-row">
+                <span style={{ fontSize: 12.5, color: 'var(--text-muted)', fontWeight: 500 }}>Sample Plan Area:</span>
+                <div className="pricing-sqft-input-wrap">
+                  <input
+                    type="number"
+                    min="100"
+                    step="50"
+                    value={testSqft}
+                    onChange={(e) => setTestSqft(e.target.value)}
+                  />
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>sq. ft.</span>
+                </div>
               </div>
-              <div className="pricing-calc-formula">
-                <span>{Number(testSqft || 0).toLocaleString()} sq. ft.</span>
-                <span>×</span>
-                <span>Rs. {Number(rateInput || ratePerSqft).toLocaleString('en-LK', { minimumFractionDigits: 2 })}</span>
-                <span>=</span>
-                <strong style={{ color: '#059669', fontSize: 15 }}>
-                  Rs. {((parseFloat(testSqft) || 0) * (parseFloat(rateInput) || ratePerSqft)).toLocaleString('en-LK', { minimumFractionDigits: 2 })}
-                </strong>
-                <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>(Calculated Total Contract Price)</span>
+              <div className="pricing-calc-result-badge">
+                <div className="pricing-calc-math-line">
+                  <span>{Number(testSqft || 0).toLocaleString()} sq. ft.</span>
+                  <span>×</span>
+                  <span>Rs. {Number(rateInput || ratePerSqft).toLocaleString('en-LK', { minimumFractionDigits: 2 })} / sq.ft</span>
+                </div>
+                <div className="pricing-calc-total-line">
+                  <span>Calculated Total:</span>
+                  <strong>
+                    Rs. {((parseFloat(testSqft) || 0) * (parseFloat(rateInput) || ratePerSqft)).toLocaleString('en-LK', { minimumFractionDigits: 2 })}
+                  </strong>
+                </div>
               </div>
             </div>
           </form>

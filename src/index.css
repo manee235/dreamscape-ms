@@ -3139,6 +3139,36 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     z-index: 10 !important;
     border-radius: 0 0 20px 20px !important;
   }
+
+  /* Settings Page Mobile Polish */
+  .settings-page-container {
+    padding: 16px 14px calc(120px + env(safe-area-inset-bottom, 24px)) !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
+  /* Hide duplicate header on mobile (topbar already displays the title) */
+  .settings-header {
+    display: none !important;
+  }
+
+  .settings-card {
+    padding: 18px 16px !important;
+    border-radius: 18px !important;
+  }
+
+  .profile-details-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .pricing-rate-hero {
+    padding: 14px !important;
+  }
+
+  .pricing-rate-val strong {
+    font-size: 22px !important;
+  }
 }
 
 /* Mobile Hero Dark Top Header */
@@ -3551,6 +3581,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .settings-page-container {
   max-width: 900px;
   margin: 0 auto;
+  padding: 0 0 calc(120px + env(safe-area-inset-bottom, 24px));
 }
 
 .settings-header {
@@ -3888,20 +3919,29 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .pricing-preset-pills {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
-  margin: 10px 0 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 4px 2px 8px;
+  flex-wrap: nowrap;
+}
+
+.pricing-preset-pills::-webkit-scrollbar {
+  display: none;
 }
 
 .pricing-preset-chip {
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 7px 14px;
+  border-radius: 9px;
   border: 1px solid var(--border-color);
   background: var(--bg-card-sub);
   color: var(--text-primary);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 12.5px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .pricing-preset-chip:hover {
@@ -3914,6 +3954,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background: #059669;
   border-color: #059669;
   color: #ffffff;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35);
 }
 
 .pricing-calc-box {
@@ -3921,7 +3962,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border: 1px dashed rgba(5, 150, 105, 0.35);
   border-radius: 14px;
   padding: 14px 16px;
-  margin: 16px 0;
+  margin: 14px 0 0;
 }
 
 .pricing-calc-header {
@@ -3931,18 +3972,81 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-size: 12px;
   font-weight: 700;
   color: #059669;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.pricing-calc-formula {
-  font-size: 13px;
+.pricing-calc-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.pricing-sqft-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 5px 12px;
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.pricing-sqft-input-wrap input {
+  width: 85px;
+  border: none !important;
+  background: transparent !important;
+  padding: 2px 0 !important;
+  font-size: 14px;
+  font-weight: 700;
   color: var(--text-primary);
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.pricing-calc-result-badge {
+  background: var(--bg-card);
+  border: 1px solid rgba(5, 150, 105, 0.25);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pricing-calc-math-line {
+  font-size: 12px;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: 6px;
+  font-weight: 500;
+}
+
+.pricing-calc-total-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   flex-wrap: wrap;
+  gap: 6px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 6px;
+}
+
+.pricing-calc-total-line strong {
+  font-size: 16px;
+  font-weight: 800;
+  color: #059669;
+}
+
+.pricing-calc-total-line span {
+  font-size: 12px;
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .sqft-calc-preview {
